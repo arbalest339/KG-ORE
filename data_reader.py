@@ -103,10 +103,11 @@ class OREDataset(data.Dataset):
     def load_test(self, line):
         line = json.loads(line)
         # 文件中读取基础数据
-        token, pos, gold, dp, head, e1, e2, r = \
-            line["token"], line["pos"], line["gold"], line["dp"], line["head"], line["e1"], line["e2"], line["pred"]
+        token, pos, dp, head, gold = \
+            list(line["token"]), line["pos"], line["dp"], line["head"], line["gold"]
         ner = [self.ner_map["O"] if tag ==
                "O" or "REL" in tag else self.ner_map[tag] for tag in gold]
+        gold = [tag if "REL" in tag else "O" for tag in gold]
         arc = [[hr[0]+1, hr[1], i+1] for i, hr in enumerate(zip(head, dp))]
 
         # padding
@@ -117,23 +118,26 @@ class OREDataset(data.Dataset):
             token = ["[CLS]"] + token + ["[SEP]"]
             pos = [0] + pos + [0]
             ner = [0] + ner + [0]
+            gold = ["O"] + gold + ["O"]
             # padding
             token += ["[PAD]"] * pad_length
             pos += [0] * pad_length
             ner += [0] * pad_length
             # dp arcs pad
             arc = [[0,0,0]] + arc + [[0,0,0]]
-            for p in range(pad_length + 2):     # 为arc pad的是随机产生的负样本
+            for p in range(pad_length):     # 为arc pad的是随机产生的负样本
                 neg = arc[-1]
                 while neg in arc:
                     neg = [int(random.uniform(1, token_length+1)), int(random.uniform(0, len(FLAGS.dp_map))), int(random.uniform(1, token_length+1))]
                 arc += [neg]
+            gold += ["O"] * pad_length
             # mask pad
             mask = [1] * (token_length + 2) + [0] * pad_length
         else:
             token = ["[CLS]"] + token[:self.max_length] + ["[SEP]"]
             pos = [0] + pos[:self.max_length] + [0]
             ner = [0] + ner[:self.max_length] + [0]
+            gold = ["O"] + gold[:self.max_length] + ["O"]
             mask = [1] * (self.max_length + 2)
             arc = [[0,0,0]] + arc[:self.max_length] + [[0,0,0]]
             # if pad_length == -1:    # 127
@@ -142,17 +146,12 @@ class OREDataset(data.Dataset):
             # else:
             #     dp = dp[:(self.max_length + 2)]
             #     head = head[:(self.max_length + 2)]
-            while len(e1) > 0 and e1[-1] + 1 >= self.max_length - 1:
-                e1.pop()
-            while len(e2) > 0 and e2[-1] + 1 >= self.max_length - 1:
-                e2.pop()
-            while len(r) > 0 and r[-1] + 1 >= self.max_length - 1:
-                r.pop()
 
         # 数字化
         token = self.tokenizer.convert_tokens_to_ids(token)
         # head = [token[h] if h > 0 else 0 for h in head]
         # head = self.tokenizer.convert_tokens_to_ids(head)
+        gold = [self.label_map[g] for g in gold]
 
         # tensor化
         token = torch.LongTensor(token).cuda(
@@ -167,10 +166,12 @@ class OREDataset(data.Dataset):
         # ) if self.use_cuda else torch.LongTensor(dp)
         # head = torch.LongTensor(head).cuda(
         # ) if self.use_cuda else torch.LongTensor(head)
+        gold = torch.LongTensor(gold).cuda(
+        ) if self.use_cuda else torch.LongTensor(gold)
         mask = torch.ByteTensor(mask).cuda(
         ) if self.use_cuda else torch.ByteTensor(mask)
 
-        return [token, pos, ner, arc, e1, e2, r, mask]
+        return [token, pos, ner, arc, gold, mask]
 
     def __len__(self):
         return self.num_example

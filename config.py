@@ -1,7 +1,7 @@
 '''
 Author: your name
 Date: 2020-09-23 09:23:31
-LastEditTime: 2021-03-10 10:31:31
+LastEditTime: 2021-03-10 16:22:19
 LastEditors: Please set LastEditors
 Description: code and model configs
 FilePath: /entity_disambiguation/config.py
@@ -25,7 +25,9 @@ class Flags(object):
         self.checkpoint_dir = os.path.join(
             curpath, "checkpoints")  # Path of model checkpoints
         self.checkpoint_path = os.path.join(
-            self.checkpoint_dir, f"{time.time()}.pkl")
+            self.checkpoint_dir, f"{time.strftime('%m-%d-%H', time.localtime(time.time()))}.pkl")
+        self.pretrained_checkpoint_path = os.path.join(
+            self.checkpoint_dir, f"pretrian_0310.pkl")       # !!!!!!!
 
         self.data_dir = os.path.join(
             curpath, f"mini_ore_data")  # Path of input data dir
@@ -45,7 +47,7 @@ class Flags(object):
         # train hyper parameters
         self.learning_rate = 3.e-5
         self.epoch = 30
-        self.batch_size = 20
+        self.batch_size = 30
         self.test_batch_size = 8
         self.max_length = 128
         self.dropout_rate = 0.5

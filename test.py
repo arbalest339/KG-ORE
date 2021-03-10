@@ -9,10 +9,9 @@ import torch
 import numpy as np
 
 from transformers import BertTokenizer, BertConfig
-# from models.main_model import SeqModel
-from models.oie_model import SeqModel
+from models.ore_model import OREModel
 from data_reader import OREDataset
-from config import FLAGS, aggcnargs
+from config import FLAGS
 
 
 def en_metrics(e1, e2, r, tag_seq):
@@ -49,36 +48,52 @@ def en_metrics(e1, e2, r, tag_seq):
     return positive_true, positive_false, negative_false
 
 
-def zh_metrics(e1, e2, r, tag_seq):
+# def zh_metrics(e1, e2, r, tag_seq):
+#     positive_true = 0
+#     positive_false = 0
+#     negative_false = 0
+
+#     for e1p in e1:
+#         if tag_seq[e1p + 1] in (1, 2):
+#             positive_true += 1
+#         else:
+#             negative_false += 1
+
+#     for e2p in e2:
+#         if tag_seq[e2p + 1] in (3, 4):
+#             positive_true += 1
+#         else:
+#             negative_false += 1
+
+#     for rp in r:
+#         if tag_seq[rp + 1] in (5, 6):
+#             positive_true += 1
+#         else:
+#             negative_false += 1
+
+#     for i, t in enumerate(tag_seq):
+#         if i - 1 not in e1 and t in (1, 2):
+#             positive_false += 1
+#         if i - 1 not in e2 and t in (3, 4):
+#             positive_false += 1
+#         if i - 1 not in r and t in (5, 6):
+#             positive_false += 1
+
+#     return positive_true, positive_false, negative_false
+
+
+def zh_metrics(gold, tag_seq):
     positive_true = 0
     positive_false = 0
     negative_false = 0
 
-    for e1p in e1:
-        if tag_seq[e1p + 1] in (1, 2):
+    for g, t in zip(gold, tag_seq):
+        if g==t and g!=0:
             positive_true += 1
-        else:
-            negative_false += 1
-
-    for e2p in e2:
-        if tag_seq[e2p + 1] in (3, 4):
-            positive_true += 1
-        else:
-            negative_false += 1
-
-    for rp in r:
-        if tag_seq[rp + 1] in (5, 6):
-            positive_true += 1
-        else:
-            negative_false += 1
-
-    for i, t in enumerate(tag_seq):
-        if i - 1 not in e1 and t in (1, 2):
+        elif t!=0 and g==0:
             positive_false += 1
-        if i - 1 not in e2 and t in (3, 4):
-            positive_false += 1
-        if i - 1 not in r and t in (5, 6):
-            positive_false += 1
+        elif g!=0:
+            negative_false += 1
 
     return positive_true, positive_false, negative_false
 
@@ -90,7 +105,7 @@ def test():
 
     # Initiate model
     print("Initiating model.")
-    model = SeqModel(FLAGS, bertconfig, aggcnargs)
+    model = OREModel(FLAGS, bertconfig)
     if torch.cuda.is_available():
         model.cuda()
 
@@ -101,7 +116,8 @@ def test():
     # load data
     print("Loading traning and valid data")
     tokenizer = BertTokenizer.from_pretrained(FLAGS.pretrained)
-    test_set = OREDataset(FLAGS.test_path, FLAGS.test_mat, tokenizer, FLAGS.max_length, mode="test")
+    test_set = OREDataset(FLAGS.test_path, tokenizer, FLAGS.max_length, mode="test")
+    testset_loader = torch.utils.data.DataLoader(test_set, FLAGS.test_batch_size, num_workers=0, drop_last=True)
     wf = open("out/auto", "a")
     wf.write("Start testing " + str(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))) + "\n")
     print("Start testing", time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
@@ -110,22 +126,16 @@ def test():
     positive_false = 0
     negative_false = 0
     model.eval()
-    for token, pos, ner, dp, head, matrix, e1, e2, r, mask in test_set.data:
+    for token, pos, ner, arc, gold, mask in testset_loader:
         model.zero_grad()
-        token = token.unsqueeze(dim=0)
-        pos = pos.unsqueeze(dim=0)
-        ner = ner.unsqueeze(dim=0)
-        dp = dp.unsqueeze(dim=0)
-        head = head.unsqueeze(dim=0)
-        matrix = matrix.unsqueeze(dim=0)
-        mask = mask.unsqueeze(dim=0)
-        tag_seq = model.decode(token, pos, ner, dp, head, matrix, mask)[0]
+        tag_seq = model.decode(token, pos, ner, arc, mask)
         # tag_seq = tag_seq.cpu().detach().numpy().tolist()
         # en_metrics(e1, e2, r, tag_seq) if FLAGS.language == "en" else
-        pt, pf, nf = zh_metrics(e1, e2, r, tag_seq)
-        positive_true += pt
-        positive_false += pf
-        negative_false += nf
+        for seq in tag_seq:
+            pt, pf, nf = zh_metrics(gold, seq)
+            positive_true += pt
+            positive_false += pf
+            negative_false += nf
 
     precision = positive_true / (positive_false + positive_true)
     recall = positive_true / (positive_true + negative_false)
