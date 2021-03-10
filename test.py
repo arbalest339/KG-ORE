@@ -11,7 +11,7 @@ import numpy as np
 from transformers import BertTokenizer, BertConfig
 # from models.main_model import SeqModel
 from models.oie_model import SeqModel
-from data_reader import OIEDataset
+from data_reader import OREDataset
 from config import FLAGS, aggcnargs
 
 
@@ -101,7 +101,7 @@ def test():
     # load data
     print("Loading traning and valid data")
     tokenizer = BertTokenizer.from_pretrained(FLAGS.pretrained)
-    test_set = OIEDataset(FLAGS.test_path, FLAGS.test_mat, tokenizer, FLAGS.max_length, mode="test")
+    test_set = OREDataset(FLAGS.test_path, FLAGS.test_mat, tokenizer, FLAGS.max_length, mode="test")
     wf = open("out/auto", "a")
     wf.write("Start testing " + str(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))) + "\n")
     print("Start testing", time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))

@@ -11,20 +11,21 @@ from torch import mode
 from transformers import BertTokenizer, BertConfig
 from torch.optim.lr_scheduler import ReduceLROnPlateau, CosineAnnealingLR
 from tqdm import tqdm
-from models.main_model import TransModel
-from data_reader import OIEDataset
-from config import FLAGS, aggcnargs
+from models.trans_model import TransModel
+from data_reader import OREDataset
+from config import FLAGS
 
 
-def select_model(flags, bertconfig, aggcnargs):
-    model = TransModel(flags, bertconfig, aggcnargs)
+def select_model(flags, bertconfig):
+    model = TransModel(flags, bertconfig)
     return model
 
 
 def select_optim(flags, model):
-    optimizer = torch.optim.Adadelta([{"params": model.aggcn.parameters(), "lr": aggcnargs.lr},
-                                      {"params": model.bert.parameters()},
-                                      {"params": model.transd.parameters()}], lr=FLAGS.learning_rate)
+    # optimizer = torch.optim.Adadelta([{"params": model.aggcn.parameters(), "lr": aggcnargs.lr},
+    #                                   {"params": model.bert.parameters()},
+    #                                   {"params": model.transd.parameters()}], lr=FLAGS.learning_rate)
+    optimizer = torch.optim.Adam(model.parameters(), lr=FLAGS.learning_rate, weight_decay=FLAGS.weight_decay)
     return optimizer
 
 
@@ -34,7 +35,7 @@ def main():
 
     # Initiate model
     print("Initiating model.")
-    model = select_model(FLAGS, bertconfig, aggcnargs)
+    model = select_model(FLAGS, bertconfig)
     if torch.cuda.is_available():
         model.cuda()
     if FLAGS.is_continue:
@@ -45,8 +46,8 @@ def main():
     # load data
     print("Loading traning and valid data")
     tokenizer = BertTokenizer.from_pretrained(FLAGS.pretrained)
-    train_set = OIEDataset(FLAGS.train_path, FLAGS.train_mat, tokenizer, FLAGS.max_length, mode="train")
-    dev_set = OIEDataset(FLAGS.dev_path, FLAGS.dev_mat, tokenizer, FLAGS.max_length, mode="train")
+    train_set = OREDataset(FLAGS.train_path, tokenizer, FLAGS.max_length, mode="train")
+    dev_set = OREDataset(FLAGS.dev_path, tokenizer, FLAGS.max_length, mode="train")
     trainset_loader = torch.utils.data.DataLoader(train_set, FLAGS.batch_size, shuffle=False, num_workers=0, drop_last=True)
     validset_loader = torch.utils.data.DataLoader(dev_set, FLAGS.test_batch_size, shuffle=False, num_workers=0, drop_last=True)
 
@@ -62,9 +63,9 @@ def main():
         losses = []
         with tqdm(total=len(train_set)/FLAGS.batch_size, desc=f'Epoch {epoch+1}/{FLAGS.epoch}', unit='it') as pbar:
             for step, data in enumerate(trainset_loader):
-                token, pos, ner, arc, matrix, gold, mask, acc_mask = data
+                token, pos, ner, arc, gold, mask, acc_mask = data
                 model.zero_grad()
-                loss = model(token, pos, ner, arc, matrix, gold, mask, acc_mask)
+                loss = model(token, arc, mask)
                 losses.append(loss.data.item())
                 # backward
                 loss.backward()
@@ -78,9 +79,9 @@ def main():
         model.eval()
         losses = []
         for step, data in enumerate(validset_loader):
-            token, pos, ner, arc, matrix, gold, mask, acc_mask = data
+            token, pos, ner, arc, gold, mask, acc_mask = data
             model.zero_grad()
-            loss = model(token, pos, ner, arc, matrix, gold, mask, acc_mask)
+            loss = model(token, arc, mask)
             losses.append(loss.data.item())
         valid_loss = np.mean(losses)
         scheduler.step(valid_loss)

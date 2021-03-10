@@ -157,17 +157,21 @@ class TransD(Model):
     def _transfer(self, e, e_transfer, r_transfer):
         if e.shape[0] != r_transfer.shape[0]:
             e = e.view(-1, r_transfer.shape[0], e.shape[-1])
-            e_transfer = e_transfer.view(-1, r_transfer.shape[0], e_transfer.shape[-1])
-            r_transfer = r_transfer.view(-1, r_transfer.shape[0], r_transfer.shape[-1])
+            e_transfer = e_transfer.view(-1,
+                                         r_transfer.shape[0], e_transfer.shape[-1])
+            r_transfer = r_transfer.view(-1,
+                                         r_transfer.shape[0], r_transfer.shape[-1])
             e = F.normalize(
-                self._resize(e, -1, r_transfer.size()[-1]) + torch.sum(e * e_transfer, -1, True) * r_transfer,
+                self._resize(
+                    e, -1, r_transfer.size()[-1]) + torch.sum(e * e_transfer, -1, True) * r_transfer,
                 p=2,
                 dim=-1
             )
             return e.view(-1, e.shape[-1])
         else:
             return F.normalize(
-                self._resize(e, -1, r_transfer.size()[-1]) + torch.sum(e * e_transfer, -1, True) * r_transfer,
+                self._resize(
+                    e, -1, r_transfer.size()[-1]) + torch.sum(e * e_transfer, -1, True) * r_transfer,
                 p=2,
                 dim=-1
             )
@@ -187,12 +191,25 @@ class TransD(Model):
         p_score = self._get_positive_score(score, mask)
         n_score = self._get_negative_score(score, mask)
         if p_score.shape[0] > n_score.shape[0]:
-            n_score = torch.cat([n_score, n_score.mean().expand((p_score.shape[0] - n_score.shape[0],))], dim=0)
+            n_score = torch.cat([n_score, n_score.mean().expand(
+                (p_score.shape[0] - n_score.shape[0],))], dim=0)
         elif n_score.shape[0] > p_score.shape[0]:
-            p_score = torch.cat([p_score, p_score.mean().expand((n_score.shape[0] - p_score.shape[0],))], dim=0)
+            p_score = torch.cat([p_score, p_score.mean().expand(
+                (n_score.shape[0] - p_score.shape[0],))], dim=0)
         loss_res = self.loss(p_score, n_score)
 
         return loss_res
+
+    def getEmb(self, emb_h, emb_t, batch_h, batch_t, batch_r):
+        mode = "head_batch"
+        r = self.rel_embeddings(batch_r)
+        h_transfer = self.ent_transfer(batch_h)
+        t_transfer = self.ent_transfer(batch_t)
+        r_transfer = self.rel_transfer(batch_r)
+        h = self._transfer(emb_h, h_transfer, r_transfer)   # 投影的过程
+        t = self._transfer(emb_t, t_transfer, r_transfer)
+
+        return h, r, t
 
     def _get_positive_score(self, score, mask):
         positive_score = score[mask.view(-1)]
@@ -224,7 +241,8 @@ class MarginLoss(Loss):
         self.margin = nn.Parameter(torch.Tensor([margin]))
         self.margin.requires_grad = False
         if adv_temperature != None:
-            self.adv_temperature = nn.Parameter(torch.Tensor([adv_temperature]))
+            self.adv_temperature = nn.Parameter(
+                torch.Tensor([adv_temperature]))
             self.adv_temperature.requires_grad = False
             self.adv_flag = True
         else:
