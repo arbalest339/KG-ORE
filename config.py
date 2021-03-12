@@ -1,7 +1,7 @@
 '''
 Author: your name
 Date: 2020-09-23 09:23:31
-LastEditTime: 2021-03-10 16:22:19
+LastEditTime: 2021-03-12 11:00:11
 LastEditors: Please set LastEditors
 Description: code and model configs
 FilePath: /entity_disambiguation/config.py
@@ -27,7 +27,9 @@ class Flags(object):
         self.checkpoint_path = os.path.join(
             self.checkpoint_dir, f"{time.strftime('%m-%d-%H', time.localtime(time.time()))}.pkl")
         self.pretrained_checkpoint_path = os.path.join(
-            self.checkpoint_dir, f"pretrian_0310.pkl")       # !!!!!!!
+            self.checkpoint_dir, f"pretrain_03-11.pkl")       # !!!!!!!
+        self.test_checkpoint = os.path.join(
+            self.checkpoint_dir, f"03-10-18.pkl")
 
         self.data_dir = os.path.join(
             curpath, f"mini_ore_data")  # Path of input data dir
@@ -56,6 +58,7 @@ class Flags(object):
         self.use_cuda = True
 
         # TransD config
+        self.trans_select = "TransD" # TransE TransH
         self.feature_dim = 100
         self.margin = 4.0
 

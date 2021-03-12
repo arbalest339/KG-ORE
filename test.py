@@ -109,12 +109,12 @@ def test():
     if torch.cuda.is_available():
         model.cuda()
 
-    model.load_state_dict(torch.load(FLAGS.checkpoint_path))
+    model.load_state_dict(torch.load(FLAGS.test_checkpoint))
     print('Loading from previous model.')
     print("Model initialized.")
 
     # load data
-    print("Loading traning and valid data")
+    print("Loading test data")
     tokenizer = BertTokenizer.from_pretrained(FLAGS.pretrained)
     test_set = OREDataset(FLAGS.test_path, tokenizer, FLAGS.max_length, mode="test")
     testset_loader = torch.utils.data.DataLoader(test_set, FLAGS.test_batch_size, num_workers=0, drop_last=True)
@@ -126,12 +126,13 @@ def test():
     positive_false = 0
     negative_false = 0
     model.eval()
-    for token, pos, ner, arc, gold, mask in testset_loader:
+    for token, pos, ner, arc, golds, mask in testset_loader:
         model.zero_grad()
         tag_seq = model.decode(token, pos, ner, arc, mask)
+        golds = golds.cpu().numpy().tolist()
         # tag_seq = tag_seq.cpu().detach().numpy().tolist()
         # en_metrics(e1, e2, r, tag_seq) if FLAGS.language == "en" else
-        for seq in tag_seq:
+        for gold, seq in zip(golds, tag_seq):
             pt, pf, nf = zh_metrics(gold, seq)
             positive_true += pt
             positive_false += pf

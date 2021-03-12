@@ -1,7 +1,7 @@
 '''
 Author: your name
 Date: 2021-03-08 08:39:21
-LastEditTime: 2021-03-10 15:08:55
+LastEditTime: 2021-03-12 11:02:03
 LastEditors: Please set LastEditors
 Description: In User Settings Edit
 FilePath: /code_for_project/models/ore_model.py
@@ -14,7 +14,7 @@ from torch.autograd import Variable
 import numpy as np
 from torch.nn.modules.loss import CrossEntropyLoss
 from transformers import BertForTokenClassification
-from models.trans_model import TransModel
+from models.pretrainModel import PretrainModel
 from torchcrf import CRF
 
 
@@ -27,7 +27,7 @@ class OREModel(nn.Module):
         bertconfig.output_hidden_states = True
         # self.bert = BertForTokenClassification.from_pretrained(flags.pretrained, config=bertconfig)
 
-        self.transModel = TransModel(flags, bertconfig)
+        self.transModel = PretrainModel(flags, bertconfig)
         self.transModel.load_state_dict(torch.load(flags.pretrained_checkpoint_path))
 
         # feature emb
@@ -35,7 +35,8 @@ class OREModel(nn.Module):
         self.posEmb = nn.Embedding(len(flags.pos_map), flags.feature_dim)
 
         # full connection layers
-        self.concat2tag = nn.Linear(flags.feature_dim*4, self.label_num)    # bertconfig.hidden_size + 
+        self.concat2tag = nn.Linear(flags.feature_dim*3+bertconfig.hidden_size, self.label_num)
+        # self.concat2tag = nn.Linear(flags.feature_dim*4, self.label_num)
 
         # CRF layer
         self.crf_layer = CRF(self.label_num, batch_first=True)
@@ -56,10 +57,14 @@ class OREModel(nn.Module):
         logits = self.concat2tag(logits)
 
         # crf loss
-        loss = - self.crf_layer(logits, gold, mask=mask, reduction="mean")
-        # crf_loss = self.loss(logits.view(-1, self.label_num), gold.view(-1))
-        pred = torch.Tensor(self.crf_layer.decode(logits)).cuda()
-        # pred = torch.max(log_softmax(logits, dim=-1), dim=-1).indices
+        # loss = - self.crf_layer(logits, gold, mask=acc_mask, reduction="mean")
+        # loss += - self.crf_layer(logits, gold, mask=mask, reduction="mean")
+        # pred = torch.Tensor(self.crf_layer.decode(logits)).cuda()
+
+        # softmax loss
+        loss = self.loss(logits.view(-1, self.label_num), gold.view(-1))
+        pred = torch.max(log_softmax(logits, dim=-1), dim=-1).indices
+
         zero = torch.zeros(*gold.shape, dtype=gold.dtype).cuda()
         eq = torch.eq(pred, gold.float())
         acc = torch.sum(eq * acc_mask.float()) / torch.sum(acc_mask.float())
@@ -81,7 +86,7 @@ class OREModel(nn.Module):
         logits = self.concat2tag(logits)
 
         # crf decode
-        tag_seq = self.crf_layer.decode(logits, mask=mask)
-        # tag_seq = torch.max(log_softmax(logits[mask.bool()], dim=-1), dim=-1).indices
-        # tag_seq = tag_seq.cpu().detach().numpy().tolist()
+        # tag_seq = self.crf_layer.decode(logits, mask=mask)
+        tag_seq = torch.max(log_softmax(logits[mask.bool()], dim=-1), dim=-1).indices
+        tag_seq = tag_seq.cpu().detach().numpy().tolist()
         return tag_seq

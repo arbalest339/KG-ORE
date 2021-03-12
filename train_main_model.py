@@ -76,8 +76,8 @@ def main():
     tokenizer = BertTokenizer.from_pretrained(FLAGS.pretrained)
     train_set = OREDataset(FLAGS.train_path, tokenizer, FLAGS.max_length, mode="train")
     dev_set = OREDataset(FLAGS.dev_path, tokenizer, FLAGS.max_length, mode="test")
-    trainset_loader = torch.utils.data.DataLoader(train_set, FLAGS.batch_size, num_workers=0, drop_last=True)
-    validset_loader = torch.utils.data.DataLoader(dev_set, FLAGS.test_batch_size, num_workers=0, drop_last=True)
+    trainset_loader = torch.utils.data.DataLoader(train_set, FLAGS.batch_size, num_workers=0, drop_last=True, shuffle=True)
+    validset_loader = torch.utils.data.DataLoader(dev_set, FLAGS.test_batch_size, num_workers=0, drop_last=True, shuffle=True)
 
     optimizer = select_optim(model)
     scheduler = ReduceLROnPlateau(optimizer, 'min', verbose=1, patience=2, factor=0.5, min_lr=1.e-8)
@@ -91,7 +91,7 @@ def main():
         model.train()
         losses = []
         accs = []
-        with tqdm(total=len(train_set)/FLAGS.batch_size, desc=f'Epoch {epoch+1}/{FLAGS.epoch}', unit='it') as pbar:
+        with tqdm(total=len(train_set)//FLAGS.batch_size, desc=f'Epoch {epoch+1}/{FLAGS.epoch}', unit='it') as pbar:
             for step, data in enumerate(trainset_loader):
                 token, pos, ner, arc, gold, mask, acc_mask = data
                 model.zero_grad()
