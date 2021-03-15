@@ -53,6 +53,8 @@ def test(model, validset_loader):
     f1 = 2 * precision * recall / (precision + recall)
 
     print(f"Precision: {precision: .4f}, Recall: {recall: .4f}, F1: {f1: .4f}")
+    with open("out/ore_record.txt", "a") as rf:
+        rf.write(f"Precision: {precision: .4f}, Recall: {recall: .4f}, F1: {f1: .4f}\n")
     return f1
 
 
@@ -84,7 +86,7 @@ def main():
     # scheduler = CosineAnnealingLR(optimizer, T_max=(FLAGS.epoch // 9) + 1)
     # best_loss = 100
     best_acc = 0.0
-    patience = FLAGS.patient
+    # patience = FLAGS.patient
 
     print("Start training", time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
     for epoch in range(FLAGS.epoch):
@@ -114,12 +116,12 @@ def main():
             print('Saving model...  ', time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
             torch.save(model.state_dict(), FLAGS.checkpoint_path)
             print('Saving model finished.  ', time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
-            patience = FLAGS.patient
-        else:
-            patience -= 1
+        #     patience = FLAGS.patient
+        # else:
+        #     patience -= 1
 
-        if patience == 0:
-            break
+        # if patience == 0:
+        #     break
         # print('Saving model...  ', time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
         # torch.save(model.state_dict(), FLAGS.checkpoint_path)
         # print('Saving model finished.  ', time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))

@@ -1,7 +1,7 @@
 '''
 Author: your name
 Date: 2020-09-23 09:23:31
-LastEditTime: 2021-03-12 11:00:11
+LastEditTime: 2021-03-14 19:46:26
 LastEditors: Please set LastEditors
 Description: code and model configs
 FilePath: /entity_disambiguation/config.py
@@ -45,10 +45,11 @@ class Flags(object):
 
         # Path of output results dir
         self.out_dir = os.path.join(curpath, "out")
+        self.record_path = os.path.join(self.out_dir, "ore_record.txt")
 
         # train hyper parameters
         self.learning_rate = 3.e-5
-        self.epoch = 30
+        self.epoch = 100
         self.batch_size = 30
         self.test_batch_size = 8
         self.max_length = 128
@@ -58,9 +59,16 @@ class Flags(object):
         self.use_cuda = True
 
         # TransD config
-        self.trans_select = "TransD" # TransE TransH
+        self.trans_select = "TransD"  # TransE TransH
         self.feature_dim = 100
         self.margin = 4.0
+
+        # model choice
+        self.loadBert = "official" # pretrained,official
+        self.dpType = "pretrained" # random,pretrained
+        self.features = ["dp", "pos", "ner"]   # ["dp", "pos", "ner"]
+        self.decoder = "crf" # crf, softmax
+
 
         # lstm
         self.lstm_hidden = 300
@@ -70,6 +78,8 @@ class Flags(object):
         self.ner_map = {"O": 0, "B-PER": 1, "I-PER": 2, "B-ORG": 3, "I-ORG": 4,
                         "B-LOC": 5, "I-LOC": 6, "B-REG": 7, "I-REG": 8, "B-OTH": 9, "I-OTH": 10}
         self.label_map = {"O": 0, "B-REL": 1, "I-REL": 2}
+        # self.label_map = {"O": 0, "B-PER": 1, "I-PER": 2, "B-ORG": 3, "I-ORG": 4, "B-LOC": 5,
+        #                   "I-LOC": 6, "B-REG": 7, "I-REG": 8, "B-OTH": 9, "I-OTH": 10, "B-REL": 11, "I-REL": 12}
         self.dp_map = json.load(
             open(os.path.join(self.data_dir, "dp_map.json")))
         self.pos_map = json.load(
