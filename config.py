@@ -1,7 +1,7 @@
 '''
 Author: your name
 Date: 2020-09-23 09:23:31
-LastEditTime: 2021-03-14 19:46:26
+LastEditTime: 2021-03-15 18:25:47
 LastEditors: Please set LastEditors
 Description: code and model configs
 FilePath: /entity_disambiguation/config.py
@@ -27,7 +27,7 @@ class Flags(object):
         self.checkpoint_path = os.path.join(
             self.checkpoint_dir, f"{time.strftime('%m-%d-%H', time.localtime(time.time()))}.pkl")
         self.pretrained_checkpoint_path = os.path.join(
-            self.checkpoint_dir, f"pretrain_03-11.pkl")       # !!!!!!!
+            self.checkpoint_dir, f"pretrain_03-15.pkl")       # !!!!!!!
         self.test_checkpoint = os.path.join(
             self.checkpoint_dir, f"03-10-18.pkl")
 
@@ -67,7 +67,7 @@ class Flags(object):
         self.loadBert = "official" # pretrained,official
         self.dpType = "pretrained" # random,pretrained
         self.features = ["dp", "pos", "ner"]   # ["dp", "pos", "ner"]
-        self.decoder = "crf" # crf, softmax
+        self.decoder = "softmax" # crf, softmax
 
 
         # lstm
