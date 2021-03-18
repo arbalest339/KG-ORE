@@ -2,15 +2,12 @@
 test process entry
 """
 
-import os
 import time
-import json
 import torch
-import numpy as np
 
 from transformers import BertTokenizer, BertConfig
-from models.ore_model import OREModel
-from data_reader import OREDataset
+from models.ner_model import NERModel
+from data_reader import NERDataset
 from config import FLAGS
 
 
@@ -88,11 +85,11 @@ def zh_metrics(gold, tag_seq):
     negative_false = 0
 
     for g, t in zip(gold, tag_seq):
-        if g==t and g!=0:
+        if g == t and g != 0:
             positive_true += 1
-        elif t!=0 and g==0:
+        elif t != 0 and g == 0:
             positive_false += 1
-        elif g!=0:
+        elif g != 0:
             negative_false += 1
 
     return positive_true, positive_false, negative_false
@@ -105,7 +102,7 @@ def test():
 
     # Initiate model
     print("Initiating model.")
-    model = OREModel(FLAGS, bertconfig)
+    model = NERModel(FLAGS, bertconfig)
     if torch.cuda.is_available():
         model.cuda()
 
@@ -116,7 +113,7 @@ def test():
     # load data
     print("Loading test data")
     tokenizer = BertTokenizer.from_pretrained(FLAGS.pretrained)
-    test_set = OREDataset(FLAGS.test_path, tokenizer, FLAGS.max_length, mode="test")
+    test_set = NERDataset(FLAGS.test_path, tokenizer, FLAGS.max_length, mode="test")
     testset_loader = torch.utils.data.DataLoader(test_set, FLAGS.test_batch_size, num_workers=0, drop_last=True)
     wf = open("out/auto", "a")
     wf.write("Start testing " + str(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))) + "\n")
@@ -126,9 +123,9 @@ def test():
     positive_false = 0
     negative_false = 0
     model.eval()
-    for token, pos, ner, arc, golds, mask in testset_loader:
+    for token, pos, golds, mask in testset_loader:
         model.zero_grad()
-        tag_seq = model.decode(token, pos, ner, arc, mask)
+        tag_seq = model.decode(token, pos, mask)
         golds = golds.cpu().numpy().tolist()
         # tag_seq = tag_seq.cpu().detach().numpy().tolist()
         # en_metrics(e1, e2, r, tag_seq) if FLAGS.language == "en" else

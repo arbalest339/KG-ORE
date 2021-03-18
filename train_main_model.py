@@ -1,24 +1,23 @@
 """
 training process entry
 """
-import json
-import os
+
 import time
 import torch
 import numpy as np
-from torch import mode
+
 
 from transformers import BertTokenizer, BertConfig
 from torch.optim.lr_scheduler import ReduceLROnPlateau, CosineAnnealingLR
 from tqdm import tqdm
-from models.ore_model import OREModel
-from test import en_metrics, zh_metrics
-from data_reader import OREDataset
+from models.ner_model import NERModel
+from test import zh_metrics
+from data_reader import NERDataset
 from config import FLAGS
 
 
 def select_model(flags, bertconfig):
-    model = OREModel(flags, bertconfig)
+    model = NERModel(flags, bertconfig)
     return model
 
 
@@ -36,9 +35,9 @@ def test(model, validset_loader):
     positive_false = 0
     negative_false = 0
     model.eval()
-    for token, pos, ner, arc, golds, mask in validset_loader:
+    for token, pos, golds, mask in validset_loader:
         model.zero_grad()
-        tag_seq = model.decode(token, pos, ner, arc, mask)
+        tag_seq = model.decode(token, pos, mask)
         golds = golds.cpu().numpy().tolist()
         # tag_seq = tag_seq.cpu().detach().numpy().tolist()
         # en_metrics(e1, e2, r, tag_seq) if FLAGS.language == "en" else
@@ -76,8 +75,8 @@ def main():
     # load data
     print("Loading traning and valid data")
     tokenizer = BertTokenizer.from_pretrained(FLAGS.pretrained)
-    train_set = OREDataset(FLAGS.train_path, tokenizer, FLAGS.max_length, mode="train")
-    dev_set = OREDataset(FLAGS.dev_path, tokenizer, FLAGS.max_length, mode="test")
+    train_set = NERDataset(FLAGS.train_path, tokenizer, FLAGS.max_length, mode="train")
+    dev_set = NERDataset(FLAGS.dev_path, tokenizer, FLAGS.max_length, mode="test")
     trainset_loader = torch.utils.data.DataLoader(train_set, FLAGS.batch_size, num_workers=0, drop_last=True, shuffle=True)
     validset_loader = torch.utils.data.DataLoader(dev_set, FLAGS.test_batch_size, num_workers=0, drop_last=True, shuffle=True)
 
@@ -95,9 +94,9 @@ def main():
         accs = []
         with tqdm(total=len(train_set)//FLAGS.batch_size, desc=f'Epoch {epoch+1}/{FLAGS.epoch}', unit='it') as pbar:
             for step, data in enumerate(trainset_loader):
-                token, pos, ner, arc, gold, mask, acc_mask = data
+                token, pos, gold, mask, acc_mask = data
                 model.zero_grad()
-                loss, acc, zero_acc = model(token, pos, ner, arc, gold, mask, acc_mask)
+                loss, acc, zero_acc = model(token, pos, gold, mask, acc_mask)
                 losses.append(loss.data.item())
                 accs.append(acc.data.item())
                 # backward
