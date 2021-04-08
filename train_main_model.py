@@ -52,7 +52,7 @@ def test(model, validset_loader):
     f1 = 2 * precision * recall / (precision + recall)
 
     print(f"Precision: {precision: .4f}, Recall: {recall: .4f}, F1: {f1: .4f}")
-    with open("out/ore_record.txt", "a") as rf:
+    with open(FLAGS.record_path, "a") as rf:
         rf.write(f"Precision: {precision: .4f}, Recall: {recall: .4f}, F1: {f1: .4f}\n")
     return f1
 
@@ -68,7 +68,7 @@ def main():
     if torch.cuda.is_available():
         model.cuda()
     if FLAGS.is_continue:
-        model.load_state_dict(torch.load(FLAGS.checkpoint_path))
+        model.load_state_dict(torch.load(FLAGS.pretrain_checkpoint))
         print('Training from previous model.')
     print("Model initialized.")
 

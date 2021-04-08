@@ -21,8 +21,14 @@ class NERDataset(data.Dataset):
 
     def load_train(self, line):
         line = json.loads(line)
-        token, pos, gold = \
-            list(line["token"]), line["pos"], line["gold"]
+        if "gold" in line:
+            token, gold = list(line["token"]), line["gold"]
+        else:
+            token, gold = list(line["token"]), line["ner"]
+        if "pos" in FLAGS.features:
+            pos = line["pos"]
+        else:
+            pos = [0]*len(token)
         gold = ["O" if tag == "O" or "REL" in tag else tag for tag in gold]
 
         # padding
@@ -72,8 +78,14 @@ class NERDataset(data.Dataset):
     def load_test(self, line):
         line = json.loads(line)
         # 文件中读取基础数据
-        token, pos, gold = \
-            list(line["token"]), line["pos"], line["gold"]
+        if "gold" in line:
+            token, gold = list(line["token"]), line["gold"]
+        else:
+            token, gold = list(line["token"]), line["ner"]
+        if "pos" in FLAGS.features:
+            pos = line["pos"]
+        else:
+            pos = [0]*len(token)
         gold = ["O" if tag == "O" or "REL" in tag else tag for tag in gold]
 
         # padding
@@ -94,6 +106,7 @@ class NERDataset(data.Dataset):
         else:
             token = ["[CLS]"] + token[:self.max_length] + ["[SEP]"]
             gold = ["O"] + gold[:self.max_length] + ["O"]
+            pos = [0] + pos[:self.max_length] + [0]
             mask = [1] * (self.max_length + 2)
         # 数字化
         token = self.tokenizer.convert_tokens_to_ids(token)
@@ -110,6 +123,11 @@ class NERDataset(data.Dataset):
         ) if self.use_cuda else torch.ByteTensor(mask)
 
         return [token, pos, gold, mask]
+
+    def getOrigin(self, idx):
+        line = self.datas[idx]
+        line = json.loads(line)
+        return list(line["token"]), line["ner"]
 
     def __len__(self):
         return self.num_example
