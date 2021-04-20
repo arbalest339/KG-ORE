@@ -7,7 +7,7 @@ import torch
 import torch.utils.data as data
 
 
-class NERDataset(data.Dataset):
+class OREDataset(data.Dataset):
     def __init__(self, data_path, tokenizer, max_length, mode, use_cuda=True):
         self.use_cuda = use_cuda
         self.max_length = max_length - 2

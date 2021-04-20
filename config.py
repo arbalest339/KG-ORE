@@ -1,7 +1,7 @@
 '''
 Author: your name
 Date: 2020-09-23 09:23:31
-LastEditTime: 2021-03-18 09:00:45
+LastEditTime: 2021-04-20 08:47:21
 LastEditors: Please set LastEditors
 Description: code and model configs
 FilePath: /entity_disambiguation/config.py
@@ -14,7 +14,7 @@ import time
 class Flags(object):
     def __init__(self):
         # task info
-        self.data_set = "mini_corekb"  # "corekb" "chinatimes"
+        self.data_set = "chinatimes"  # "corekb" "chinatimes"
         self.is_continue = False
         self.is_test = False
         self.Canonicalizing = False
@@ -26,17 +26,19 @@ class Flags(object):
             curpath, "checkpoints")  # Path of model checkpoints
         self.checkpoint_path = os.path.join(
             self.checkpoint_dir, f"{time.strftime('%m-%d-%H', time.localtime(time.time()))}.pkl")
+        self.pretrain_checkpoint = os.path.join(
+            self.checkpoint_dir, "03-19-10.pkl")
         self.test_checkpoint = os.path.join(
-            self.checkpoint_dir, "03-10-18.pkl")
+            self.checkpoint_dir, "03-24-16.pkl")
 
         self.data_dir = os.path.join(
-            curpath, "mini_ore_data")  # Path of input data dir
+            curpath, "zh_data")  # Path of input data dir
         self.train_path = os.path.join(
-            self.data_dir, f"{self.data_set}_train.txt")     # !!!!!!!!!!!!!!!!!!!!!!
+            self.data_dir, f"all.txt")     # !!!!!!!!!!!!!!!!!!!!!!
         self.dev_path = os.path.join(
-            self.data_dir, f"{self.data_set}_dev.txt")
+            self.data_dir, f"dev.txt")
         self.test_path = os.path.join(
-            self.data_dir, f"{self.data_set}_test.txt")
+            self.data_dir, f"all.txt")
         # self.train_mat = os.path.join(self.data_dir, f"{self.data_set}_train_matrixs.npy")
         # self.dev_mat = os.path.join(self.data_dir, f"{self.data_set}_dev_matrixs.npy")
         # self.test_mat = os.path.join(self.data_dir, f"{self.data_set}_test_matrixs.npy")
@@ -49,7 +51,7 @@ class Flags(object):
         self.learning_rate = 3.e-5
         self.epoch = 100
         self.batch_size = 30
-        self.test_batch_size = 8
+        self.test_batch_size = 1
         self.max_length = 128
         self.dropout_rate = 0.5
         self.weight_decay = 1.e-3
@@ -62,8 +64,8 @@ class Flags(object):
         self.margin = 4.0
 
         # model choice
-        self.features = ["pos"]   # ["dp", "pos", "ner"]
-        self.decoder = "softmax"  # crf, softmax
+        self.features = []   # ["dp", "pos", "ner"]
+        self.decoder = "crf"  # crf, softmax
 
         # lstm
         self.lstm_hidden = 300
@@ -72,8 +74,8 @@ class Flags(object):
         # global datas
         self.label_map = {"O": 0, "B-PER": 1, "I-PER": 2, "B-ORG": 3, "I-ORG": 4,
                           "B-LOC": 5, "I-LOC": 6, "B-REG": 7, "I-REG": 8, "B-OTH": 9, "I-OTH": 10}
-        self.dp_map = json.load(
-            open(os.path.join(self.data_dir, "dp_map.json")))
+        # self.dp_map = json.load(
+        #     open(os.path.join(self.data_dir, "dp_map.json")))
         self.pos_map = json.load(
             open(os.path.join(self.data_dir, "pos_map.json")))
 

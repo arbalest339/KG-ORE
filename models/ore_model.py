@@ -1,7 +1,7 @@
 '''
 Author: your name
 Date: 2021-03-08 08:39:21
-LastEditTime: 2021-03-18 09:01:02
+LastEditTime: 2021-04-13 09:14:37
 LastEditors: Please set LastEditors
 Description: In User Settings Edit
 FilePath: /code_for_project/models/ore_model.py
@@ -14,9 +14,9 @@ from transformers import BertForTokenClassification
 from torchcrf import CRF
 
 
-class NERModel(nn.Module):
+class OREModel(nn.Module):
     def __init__(self, flags, bertconfig):
-        super(NERModel, self).__init__()
+        super(OREModel, self).__init__()
         self.label_num = len(flags.label_map)
         bertconfig.num_labels = self.label_num
         bertconfig.return_dict = True

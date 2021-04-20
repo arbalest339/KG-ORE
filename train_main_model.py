@@ -1,7 +1,7 @@
 """
 training process entry
 """
-
+import os
 import time
 import torch
 import numpy as np
@@ -10,22 +10,20 @@ import numpy as np
 from transformers import BertTokenizer, BertConfig
 from torch.optim.lr_scheduler import ReduceLROnPlateau, CosineAnnealingLR
 from tqdm import tqdm
-from models.ner_model import NERModel
+from models.ore_model import OREModel
 from test import zh_metrics
-from data_reader import NERDataset
+from data_reader import OREDataset
 from config import FLAGS
+
+os.environ["CUDA_VISIBLE_DEVICES"] = '1'
 
 
 def select_model(flags, bertconfig):
-    model = NERModel(flags, bertconfig)
+    model = OREModel(flags, bertconfig)
     return model
 
 
 def select_optim(model):
-    # optimizer = torch.optim.Adadelta([{"params": model.aggcn.parameters(), "lr": aggcnargs.lr},
-    #                                   {"params": model.bert.parameters()},
-    #                                   {"params": model.transd.parameters()},
-    #                                   {"params": model.crf_layer.parameters()}], lr=FLAGS.learning_rate)
     optimizer = torch.optim.Adam(model.parameters(), lr=FLAGS.learning_rate, weight_decay=FLAGS.weight_decay)
     return optimizer
 
@@ -75,8 +73,8 @@ def main():
     # load data
     print("Loading traning and valid data")
     tokenizer = BertTokenizer.from_pretrained(FLAGS.pretrained)
-    train_set = NERDataset(FLAGS.train_path, tokenizer, FLAGS.max_length, mode="train")
-    dev_set = NERDataset(FLAGS.dev_path, tokenizer, FLAGS.max_length, mode="test")
+    train_set = OREDataset(FLAGS.train_path, tokenizer, FLAGS.max_length, mode="train")
+    dev_set = OREDataset(FLAGS.dev_path, tokenizer, FLAGS.max_length, mode="test")
     trainset_loader = torch.utils.data.DataLoader(train_set, FLAGS.batch_size, num_workers=0, drop_last=True, shuffle=True)
     validset_loader = torch.utils.data.DataLoader(dev_set, FLAGS.test_batch_size, num_workers=0, drop_last=True, shuffle=True)
 

@@ -7,8 +7,8 @@ import json
 import torch
 
 from transformers import BertTokenizer, BertConfig
-from models.ner_model import NERModel
-from data_reader import NERDataset
+from models.ore_model import OREModel
+from data_reader import OREDataset
 from config import FLAGS
 
 
@@ -103,7 +103,7 @@ def test():
 
     # Initiate model
     print("Initiating model.")
-    model = NERModel(FLAGS, bertconfig)
+    model = OREModel(FLAGS, bertconfig)
     if torch.cuda.is_available():
         model.cuda()
 
@@ -114,7 +114,7 @@ def test():
     # load data
     print("Loading test data")
     tokenizer = BertTokenizer.from_pretrained(FLAGS.pretrained)
-    test_set = NERDataset(FLAGS.test_path, tokenizer, FLAGS.max_length, mode="test")
+    test_set = OREDataset(FLAGS.test_path, tokenizer, FLAGS.max_length, mode="test")
     testset_loader = torch.utils.data.DataLoader(test_set, FLAGS.test_batch_size, num_workers=0, drop_last=True)
     wf = open("out/auto", "w")
     wf.write("Start testing " + str(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))) + "\n")
