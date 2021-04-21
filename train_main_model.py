@@ -24,7 +24,7 @@ def select_model(flags, bertconfig):
 
 
 def select_optim(model):
-    optimizer = torch.optim.Adam(model.parameters(), lr=FLAGS.learning_rate, weight_decay=FLAGS.weight_decay)
+    optimizer = torch.optim.Adam(model.parameters(), lr=FLAGS.learning_rate)
     return optimizer
 
 
@@ -33,21 +33,26 @@ def test(model, validset_loader):
     positive_false = 0
     negative_false = 0
     model.eval()
-    for token, pos, golds, mask in validset_loader:
+    for input_ids, mask, type_ids, start_id, end_id in validset_loader:
         model.zero_grad()
-        tag_seq = model.decode(token, pos, mask)
-        golds = golds.cpu().numpy().tolist()
+        _, slogits, elogits = model(input_ids, mask, type_ids, start_id, end_id)
+        start_id = start_id.squeeze().cpu().numpy().tolist()
+        end_id = end_id.squeeze().cpu().numpy().tolist()
+        pred_s = slogits.cpu().detach().numpy().tolist()
+        pred_e = elogits.cpu().detach().numpy().tolist()
+        pt, pf, nf = 0, 0, 0
+        for gs, ge, ps, pe in zip(start_id, end_id, pred_s, pred_e):
+            pt += max(ps-ge, gs-ge, 0)
+            pf += max(ps-gs, 0) + max(ge-pe, 0)
+            nf += max(gs-ps, 0) + max(pe-ge, 0)
         # tag_seq = tag_seq.cpu().detach().numpy().tolist()
-        # en_metrics(e1, e2, r, tag_seq) if FLAGS.language == "en" else
-        for gold, seq in zip(golds, tag_seq):
-            pt, pf, nf = zh_metrics(gold, seq)
-            positive_true += pt
-            positive_false += pf
-            negative_false += nf
+        positive_true += pt
+        positive_false += pf
+        negative_false += nf
 
-    precision = positive_true / (positive_false + positive_true)
-    recall = positive_true / (positive_true + negative_false)
-    f1 = 2 * precision * recall / (precision + recall)
+    precision = positive_true / max(positive_false + positive_true, 1)
+    recall = positive_true / max(positive_true + negative_false, 1)
+    f1 = 2 * precision * recall / max(precision + recall, 1e-9)
 
     print(f"Precision: {precision: .4f}, Recall: {recall: .4f}, F1: {f1: .4f}")
     with open(FLAGS.record_path, "a") as rf:
@@ -73,10 +78,10 @@ def main():
     # load data
     print("Loading traning and valid data")
     tokenizer = BertTokenizer.from_pretrained(FLAGS.pretrained)
-    train_set = OREDataset(FLAGS.train_path, tokenizer, FLAGS.max_length, mode="train")
-    dev_set = OREDataset(FLAGS.dev_path, tokenizer, FLAGS.max_length, mode="test")
-    trainset_loader = torch.utils.data.DataLoader(train_set, FLAGS.batch_size, num_workers=0, drop_last=True, shuffle=True)
-    validset_loader = torch.utils.data.DataLoader(dev_set, FLAGS.test_batch_size, num_workers=0, drop_last=True, shuffle=True)
+    train_set = OREDataset(FLAGS.train_path, tokenizer, FLAGS.max_length)
+    dev_set = OREDataset(FLAGS.dev_path, tokenizer, FLAGS.max_length)
+    trainset_loader = torch.utils.data.DataLoader(train_set, FLAGS.batch_size, num_workers=0, drop_last=False, shuffle=True)
+    validset_loader = torch.utils.data.DataLoader(dev_set, FLAGS.test_batch_size, num_workers=0, drop_last=False, shuffle=True)
 
     optimizer = select_optim(model)
     scheduler = ReduceLROnPlateau(optimizer, 'min', verbose=1, patience=2, factor=0.5, min_lr=1.e-8)
@@ -92,20 +97,18 @@ def main():
         accs = []
         with tqdm(total=len(train_set)//FLAGS.batch_size, desc=f'Epoch {epoch+1}/{FLAGS.epoch}', unit='it') as pbar:
             for step, data in enumerate(trainset_loader):
-                token, pos, gold, mask, acc_mask = data
+                input_ids, mask, type_ids, start_id, end_id = data
                 model.zero_grad()
-                loss, acc, zero_acc = model(token, pos, gold, mask, acc_mask)
+                loss, slogits, elogits = model(input_ids, mask, type_ids, start_id, end_id)
                 losses.append(loss.data.item())
-                accs.append(acc.data.item())
                 # backward
                 loss.backward()
                 optimizer.step()
                 # tqdm
-                pbar.set_postfix({'batch_loss': loss.data.item(), "acc": acc.data.item(), "zero": zero_acc.data.item()})   # 在进度条后显示当前batch的损失
+                pbar.set_postfix({'batch_loss': loss.data.item()})   # 在进度条后显示当前batch的损失
                 pbar.update(1)
         train_loss = np.mean(losses)
-        train_acc = np.mean(accs)
-        print(f"[{epoch + 1}/{FLAGS.epoch}] trainset mean_loss: {train_loss: 0.4f} trainset mean_acc: {train_acc: 0.4f}")
+        print(f"[{epoch + 1}/{FLAGS.epoch}] trainset mean_loss: {train_loss: 0.4f}")
 
         f1 = test(model, validset_loader)
         if f1 > best_acc:
