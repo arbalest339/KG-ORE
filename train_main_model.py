@@ -94,7 +94,6 @@ def main():
     for epoch in range(FLAGS.epoch):
         model.train()
         losses = []
-        accs = []
         with tqdm(total=len(train_set)//FLAGS.batch_size, desc=f'Epoch {epoch+1}/{FLAGS.epoch}', unit='it') as pbar:
             for step, data in enumerate(trainset_loader):
                 input_ids, mask, type_ids, start_id, end_id = data

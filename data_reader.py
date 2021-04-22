@@ -1,7 +1,7 @@
 '''
 Author: your name
 Date: 2021-04-13 09:07:21
-LastEditTime: 2021-04-20 14:34:51
+LastEditTime: 2021-04-22 10:11:50
 LastEditors: Please set LastEditors
 Description: In User Settings Edit
 FilePath: /code_for_ore/data_reader.py
@@ -28,6 +28,8 @@ class OREDataset(data.Dataset):
     def loadSample(self, line):
         line = json.loads(line)
         text, query, answer = line["text"], line["query"], line["answer"]
+        start_id = answer[0]    # + len(query)+2
+        end_id = answer[1]  # + len(query)+2
         if "desc" in self.features:
             desc1, desc2 = line["desc"], line["desc"]
         if "exrest" in self.features:
@@ -49,17 +51,17 @@ class OREDataset(data.Dataset):
         #     mask = [1] * self.max_length
 
         # 数字化
-        inputs = self.tokenizer(query, text, padding='max_length', max_length=self.max_length, return_tensors='pt')
+        inputs = self.tokenizer(query, text, padding='max_length', truncation=True, max_length=self.max_length, return_tensors='pt')
         input_ids, mask, type_ids = \
             inputs["input_ids"].squeeze(), inputs["attention_mask"].squeeze(), inputs["token_type_ids"].squeeze()
 
         # tensor化
         if self.use_cuda:
             input_ids, mask, type_ids = input_ids.cuda(), mask.cuda(), type_ids.cuda()
-            start_id = torch.LongTensor([answer[0]]).cuda()
-            end_id = torch.LongTensor([answer[1]]).cuda()
+            start_id = torch.LongTensor([start_id]).cuda()
+            end_id = torch.LongTensor([end_id]).cuda()
         else:
-            start_id, end_id = torch.LongTensor([answer[0]]), torch.LongTensor([answer[1]])
+            start_id, end_id = torch.LongTensor([start_id]), torch.LongTensor([end_id])
         return [input_ids, mask, type_ids, start_id, end_id]
 
     def getOrigin(self, idx):

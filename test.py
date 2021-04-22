@@ -114,7 +114,7 @@ def test():
     # load data
     print("Loading test data")
     tokenizer = BertTokenizer.from_pretrained(FLAGS.pretrained)
-    test_set = OREDataset(FLAGS.test_path, tokenizer, FLAGS.max_length, mode="test")
+    test_set = OREDataset(FLAGS.test_path, tokenizer, FLAGS.max_length)
     testset_loader = torch.utils.data.DataLoader(test_set, FLAGS.test_batch_size, num_workers=0, drop_last=True)
     wf = open("out/auto", "w")
     wf.write("Start testing " + str(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))) + "\n")
@@ -125,25 +125,26 @@ def test():
     negative_false = 0
     errorsExps = []
     model.eval()
-    for i, data in enumerate(testset_loader):
-        token, pos, golds, mask = data
+    for input_ids, mask, type_ids, start_id, end_id in testset_loader:
         model.zero_grad()
-        tag_seq = model.decode(token, pos, mask)
-        golds = golds.cpu().numpy().tolist()
+        _, slogits, elogits = model(input_ids, mask, type_ids, start_id, end_id)
+        start_id = start_id.squeeze().cpu().numpy().tolist()
+        end_id = end_id.squeeze().cpu().numpy().tolist()
+        pred_s = slogits.cpu().detach().numpy().tolist()
+        pred_e = elogits.cpu().detach().numpy().tolist()
+        pt, pf, nf = 0, 0, 0
+        for gs, ge, ps, pe in zip(start_id, end_id, pred_s, pred_e):
+            pt += max(ps-ge, gs-ge, 0)
+            pf += max(ps-gs, 0) + max(ge-pe, 0)
+            nf += max(gs-ps, 0) + max(pe-ge, 0)
         # tag_seq = tag_seq.cpu().detach().numpy().tolist()
-        # en_metrics(e1, e2, r, tag_seq) if FLAGS.language == "en" else
-        for gold, seq in zip(golds, tag_seq):
-            pt, pf, nf = zh_metrics(gold, seq)
-            positive_true += pt
-            positive_false += pf
-            negative_false += nf
-            if pf > 0 or nf > 0:
-                orgtoken, orggold = test_set.getOrigin(i)
-                errorsExps.append([orgtoken, orggold])
+        positive_true += pt
+        positive_false += pf
+        negative_false += nf
 
-    precision = positive_true / (positive_false + positive_true)
-    recall = positive_true / (positive_true + negative_false)
-    f1 = 2 * precision * recall / (precision + recall)
+    precision = positive_true / max(positive_false + positive_true, 1)
+    recall = positive_true / max(positive_true + negative_false, 1)
+    f1 = 2 * precision * recall / max(precision + recall, 1e-9)
 
     print(f"Precision: {precision: .4f}, Recall: {recall: .4f}, F1: {f1: .4f}")
     wf.write(f"Precision: {precision: .4f}, Recall: {recall: .4f}, F1: {f1: .4f}\n")

@@ -1,7 +1,7 @@
 '''
 Author: your name
 Date: 2020-09-23 09:23:31
-LastEditTime: 2021-04-21 08:37:47
+LastEditTime: 2021-04-22 08:39:22
 LastEditors: Please set LastEditors
 Description: code and model configs
 FilePath: /entity_disambiguation/config.py
@@ -29,12 +29,13 @@ class Flags(object):
         self.pretrain_checkpoint = os.path.join(
             self.checkpoint_dir, "03-19-10.pkl")
         self.test_checkpoint = os.path.join(
-            self.checkpoint_dir, "03-24-16.pkl")
+            self.checkpoint_dir, "04-21-16.pkl")
 
         self.data_dir = os.path.join(curpath, "peopleDaily")  # Path of input data dir
         self.train_path = os.path.join(self.data_dir, "train.txt")     # !!!!!!!!!!!!!!!!!!!!!!
         self.dev_path = os.path.join(self.data_dir, "dev.txt")
         self.test_path = os.path.join(self.data_dir, "test.txt")
+        self.test_path = os.path.join("zh_data", "all.txt")
         # self.train_mat = os.path.join(self.data_dir, f"{self.data_set}_train_matrixs.npy")
         # self.dev_mat = os.path.join(self.data_dir, f"{self.data_set}_dev_matrixs.npy")
         # self.test_mat = os.path.join(self.data_dir, f"{self.data_set}_test_matrixs.npy")
