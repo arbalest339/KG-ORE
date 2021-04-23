@@ -2,14 +2,17 @@
 test process entry
 """
 
+import os
 import time
 import json
 import torch
 
 from transformers import BertTokenizer, BertConfig
-from models.ore_model import OREModel
+from models.qaore_model import OREModel
 from data_reader import OREDataset
 from config import FLAGS
+
+os.environ["CUDA_VISIBLE_DEVICES"] = '1'
 
 
 def en_metrics(e1, e2, r, tag_seq):

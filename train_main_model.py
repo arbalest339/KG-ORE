@@ -10,7 +10,7 @@ import numpy as np
 from transformers import BertTokenizer, BertConfig
 from torch.optim.lr_scheduler import ReduceLROnPlateau, CosineAnnealingLR
 from tqdm import tqdm
-from models.ore_model import OREModel
+from models.qaore_model import OREModel
 from test import zh_metrics
 from data_reader import OREDataset
 from config import FLAGS
