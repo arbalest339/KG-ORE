@@ -1,7 +1,7 @@
 '''
 Author: your name
 Date: 2020-09-23 09:23:31
-LastEditTime: 2021-04-20 08:47:21
+LastEditTime: 2021-04-23 17:37:49
 LastEditors: Please set LastEditors
 Description: code and model configs
 FilePath: /entity_disambiguation/config.py
@@ -34,11 +34,11 @@ class Flags(object):
         self.data_dir = os.path.join(
             curpath, "zh_data")  # Path of input data dir
         self.train_path = os.path.join(
-            self.data_dir, f"all.txt")     # !!!!!!!!!!!!!!!!!!!!!!
+            self.data_dir, "train.txt")     # !!!!!!!!!!!!!!!!!!!!!!
         self.dev_path = os.path.join(
-            self.data_dir, f"dev.txt")
+            self.data_dir, "dev.txt")
         self.test_path = os.path.join(
-            self.data_dir, f"all.txt")
+            self.data_dir, "test.txt")
         # self.train_mat = os.path.join(self.data_dir, f"{self.data_set}_train_matrixs.npy")
         # self.dev_mat = os.path.join(self.data_dir, f"{self.data_set}_dev_matrixs.npy")
         # self.test_mat = os.path.join(self.data_dir, f"{self.data_set}_test_matrixs.npy")
