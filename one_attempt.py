@@ -1,0 +1,54 @@
+'''
+Author: your name
+Date: 2021-04-29 20:14:02
+LastEditTime: 2021-04-29 20:20:42
+LastEditors: Please set LastEditors
+Description: In User Settings Edit
+FilePath: /code_for_ore/one_attempt.py
+'''
+
+from train_main_model import main
+from test import test
+from config import FLAGS
+
+FLAGS.knowledges = ["desc"]
+with open("out/super.txt", "a") as logf:
+    logf.write(str(FLAGS.knowledges) + "\n")
+main()
+test()
+
+FLAGS.knowledges = ["exrest"]
+with open("out/super.txt", "a") as logf:
+    logf.write(str(FLAGS.knowledges) + "\n")
+main()
+test()
+
+FLAGS.knowledges = ["kbRel"]
+with open("out/super.txt", "a") as logf:
+    logf.write(str(FLAGS.knowledges) + "\n")
+main()
+test()
+
+FLAGS.knowledges = ["desc", "exrest"]
+with open("out/super.txt", "a") as logf:
+    logf.write(str(FLAGS.knowledges) + "\n")
+main()
+test()
+
+FLAGS.knowledges = ["desc", "kbRel"]
+with open("out/super.txt", "a") as logf:
+    logf.write(str(FLAGS.knowledges) + "\n")
+main()
+test()
+
+FLAGS.knowledges = ["exrest", "kbRel"]
+with open("out/super.txt", "a") as logf:
+    logf.write(str(FLAGS.knowledges) + "\n")
+main()
+test()
+
+FLAGS.knowledges = ["desc", "exrest", "kbRel"]
+with open("out/super.txt", "a") as logf:
+    logf.write(str(FLAGS.knowledges) + "\n")
+main()
+test()

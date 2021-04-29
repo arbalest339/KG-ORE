@@ -119,7 +119,7 @@ def test():
     tokenizer = BertTokenizer.from_pretrained(FLAGS.pretrained)
     test_set = OREDataset(FLAGS.test_path, tokenizer, FLAGS.max_length)
     testset_loader = torch.utils.data.DataLoader(test_set, FLAGS.test_batch_size, num_workers=0, drop_last=True)
-    wf = open("out/auto", "w")
+    wf = open("out/super.txt", "a")
     wf.write("Start testing " + str(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))) + "\n")
     print("Start testing", time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
 
@@ -128,9 +128,10 @@ def test():
     negative_false = 0
     errorsExps = []
     model.eval()
-    for input_ids, mask, type_ids, start_id, end_id in testset_loader:
+    for data in testset_loader:
         model.zero_grad()
-        _, slogits, elogits = model(input_ids, mask, type_ids, start_id, end_id)
+        _, slogits, elogits = model(data)
+        start_id, end_id = data["start_id"], data["end_id"]
         start_id = start_id.squeeze().cpu().numpy().tolist()
         end_id = end_id.squeeze().cpu().numpy().tolist()
         pred_s = slogits.cpu().detach().numpy().tolist()

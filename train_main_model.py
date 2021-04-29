@@ -28,14 +28,15 @@ def select_optim(model):
     return optimizer
 
 
-def test(model, validset_loader):
+def eval(model, validset_loader):
     positive_true = 0
     positive_false = 0
     negative_false = 0
     model.eval()
-    for input_ids, mask, type_ids, start_id, end_id in validset_loader:
+    for data in validset_loader:
         model.zero_grad()
-        _, slogits, elogits = model(input_ids, mask, type_ids, start_id, end_id)
+        start_id, end_id = data["start_id"], data["end_id"]
+        _, slogits, elogits = model(data)
         start_id = start_id.squeeze().cpu().numpy().tolist()
         end_id = end_id.squeeze().cpu().numpy().tolist()
         pred_s = slogits.cpu().detach().numpy().tolist()
@@ -96,9 +97,9 @@ def main():
         losses = []
         with tqdm(total=len(train_set)//FLAGS.batch_size, desc=f'Epoch {epoch+1}/{FLAGS.epoch}', unit='it') as pbar:
             for step, data in enumerate(trainset_loader):
-                input_ids, mask, type_ids, start_id, end_id = data
+                # input_ids, mask, type_ids, start_id, end_id = data
                 model.zero_grad()
-                loss, slogits, elogits = model(input_ids, mask, type_ids, start_id, end_id)
+                loss, slogits, elogits = model(data)
                 losses.append(loss.data.item())
                 # backward
                 loss.backward()
@@ -109,18 +110,18 @@ def main():
         train_loss = np.mean(losses)
         print(f"[{epoch + 1}/{FLAGS.epoch}] trainset mean_loss: {train_loss: 0.4f}")
 
-        f1 = test(model, validset_loader)
+        f1 = eval(model, validset_loader)
         if f1 > best_acc:
             best_acc = f1
             print('Saving model...  ', time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
             torch.save(model.state_dict(), FLAGS.checkpoint_path)
             print('Saving model finished.  ', time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
-        #     patience = FLAGS.patient
-        # else:
-        #     patience -= 1
+            patience = FLAGS.patient
+        else:
+            patience -= 1
 
-        # if patience == 0:
-        #     break
+        if patience == 0:
+            break
         # print('Saving model...  ', time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
         # torch.save(model.state_dict(), FLAGS.checkpoint_path)
         # print('Saving model finished.  ', time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
