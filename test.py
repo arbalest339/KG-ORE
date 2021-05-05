@@ -136,15 +136,14 @@ def test():
         end_id = end_id.squeeze().cpu().numpy().tolist()
         pred_s = slogits.cpu().detach().numpy().tolist()
         pred_e = elogits.cpu().detach().numpy().tolist()
-        pt, pf, nf = 0, 0, 0
         for gs, ge, ps, pe in zip(start_id, end_id, pred_s, pred_e):
-            pt += max(ps-ge, gs-ge, 0)
-            pf += max(ps-gs, 0) + max(ge-pe, 0)
-            nf += max(gs-ps, 0) + max(pe-ge, 0)
-        # tag_seq = tag_seq.cpu().detach().numpy().tolist()
-        positive_true += pt
-        positive_false += pf
-        negative_false += nf
+            pf = max(ps-gs, 0) + max(ge-pe, 0)
+            nf = max(gs-ps, 0) + max(pe-ge, 0)
+            pt = max(pe-ps, pe-gs, ge-gs, ge-ps, 0) - pf - nf
+            # tag_seq = tag_seq.cpu().detach().numpy().tolist()
+            positive_true += pt
+            positive_false += pf
+            negative_false += nf
 
     precision = positive_true / max(positive_false + positive_true, 1)
     recall = positive_true / max(positive_true + negative_false, 1)

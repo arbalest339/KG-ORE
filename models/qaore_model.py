@@ -1,7 +1,7 @@
 '''
 Author: your name
 Date: 2021-03-08 08:39:21
-LastEditTime: 2021-04-29 20:01:08
+LastEditTime: 2021-05-05 15:31:46
 LastEditors: Please set LastEditors
 Description: In User Settings Edit
 FilePath: /code_for_project/models/ore_model.py
@@ -25,7 +25,7 @@ class OREModel(nn.Module):
         self.bert_hidden = bertconfig.hidden_size
 
         # local bert
-        if not self.knowledges or ("kbRel" in self.knowledges and len(self.knowledges)==1):
+        if not self.knowledges or ("kbRel" in self.knowledges and len(self.knowledges) == 1):
             self.bert = BertForQuestionAnswering.from_pretrained(
                 flags.pretrained, config=bertconfig)
             self.fuse_hidden = self.bert_hidden
@@ -49,7 +49,7 @@ class OREModel(nn.Module):
         self.sofmax = torch.nn.Softmax(dim=-1)
 
     def forward(self, datas):
-        if not self.knowledges or ("kbRel" in self.knowledges and len(self.knowledges)==1):
+        if not self.knowledges or ("kbRel" in self.knowledges and len(self.knowledges) == 1):
             input_ids, mask, type_ids, start_ids, end_ids = \
                 datas["input_ids"], datas["mask"], datas["type_ids"], datas["start_id"], datas["end_id"]
             outputs = self.bert(input_ids=input_ids, attention_mask=mask,
@@ -66,7 +66,7 @@ class OREModel(nn.Module):
             query = query[0]
             text = self.queryAtt(query, text, text)
 
-            logits = torch.cat([query, text], dim=-1)
+            logits = torch.cat([query, text], dim=1)
 
             # feature fuse and concat
             if "desc" in self.knowledges:
@@ -83,7 +83,6 @@ class OREModel(nn.Module):
                 exrest1 = self.exrestAtt(query, exrest1, exrest1)
                 exrest2 = self.exrestAtt(query, exrest2, exrest2)
                 logits = torch.cat([logits, exrest1, exrest2], dim=-1)
-
 
             # fc layer
             logits = self.qa_outputs(logits)

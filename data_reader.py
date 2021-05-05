@@ -1,7 +1,7 @@
 '''
 Author: your name
 Date: 2021-04-13 09:07:21
-LastEditTime: 2021-04-29 20:34:39
+LastEditTime: 2021-05-05 17:20:03
 LastEditors: Please set LastEditors
 Description: In User Settings Edit
 FilePath: /code_for_ore/data_reader.py
@@ -117,7 +117,7 @@ class OREDataset(data.Dataset):
         line = json.loads(line)
         start = line["answer"][0]
         end = line["answer"][1]
-        return line["text"], line["query"], line["text"][start:end]
+        return [line["text"], line["query"], line["text"][start:end]]
 
     def __len__(self):
         return self.num_example
