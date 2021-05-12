@@ -1,7 +1,7 @@
 '''
 Author: your name
 Date: 2021-03-08 08:39:21
-LastEditTime: 2021-05-05 15:31:46
+LastEditTime: 2021-05-06 14:04:25
 LastEditors: Please set LastEditors
 Description: In User Settings Edit
 FilePath: /code_for_project/models/ore_model.py
@@ -31,16 +31,16 @@ class OREModel(nn.Module):
             self.fuse_hidden = self.bert_hidden
         else:
             self.bert = BertModel.from_pretrained(flags.pretrained, config=bertconfig)
-            self.fuse_hidden = self.bert_hidden*2
+            self.fuse_hidden = self.bert_hidden
             self.queryAtt = BasicAttention(self.bert_hidden, self.bert_hidden, self.bert_hidden)
 
         # feature
         if "desc" in self.knowledges:
             self.descAtt = BasicAttention(self.bert_hidden, self.bert_hidden, self.bert_hidden)
-            self.fuse_hidden += self.bert_hidden*2
+            # self.fuse_hidden += self.bert_hidden
         if "exrest" in self.knowledges:
             self.exrestAtt = BasicAttention(self.bert_hidden, self.bert_hidden, self.bert_hidden)
-            self.fuse_hidden += self.bert_hidden*2
+            # self.fuse_hidden += self.bert_hidden
 
         # full connection layer
         self.qa_outputs = nn.Linear(self.fuse_hidden, self.num_labels)
@@ -75,14 +75,14 @@ class OREModel(nn.Module):
                 desc2 = self.bert(desc2)[0]
                 desc1 = self.descAtt(query, desc1, desc1)
                 desc2 = self.descAtt(query, desc2, desc2)
-                logits = torch.cat([logits, desc1, desc2], dim=-1)
+                logits = torch.cat([logits, desc1, desc2], dim=1)
             if "exrest" in self.knowledges:
                 exrest1, exrest2 = datas["exrest1"], datas["exrest2"]
                 exrest1 = self.bert(exrest1)[0]
                 exrest2 = self.bert(exrest2)[0]
                 exrest1 = self.exrestAtt(query, exrest1, exrest1)
                 exrest2 = self.exrestAtt(query, exrest2, exrest2)
-                logits = torch.cat([logits, exrest1, exrest2], dim=-1)
+                logits = torch.cat([logits, exrest1, exrest2], dim=1)
 
             # fc layer
             logits = self.qa_outputs(logits)

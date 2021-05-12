@@ -1,7 +1,7 @@
 '''
 Author: your name
 Date: 2020-09-23 09:23:31
-LastEditTime: 2021-05-05 17:14:32
+LastEditTime: 2021-05-10 08:12:27
 LastEditors: Please set LastEditors
 Description: code and model configs
 FilePath: /entity_disambiguation/config.py
@@ -28,8 +28,8 @@ class Flags(object):
             self.checkpoint_dir, f"{time.strftime('%m-%d-%H', time.localtime(time.time()))}.pkl")
         self.pretrain_checkpoint = os.path.join(
             self.checkpoint_dir, "03-19-10.pkl")
-        self.test_checkpoint = "checkpoints/05-05-15.pkl"  # self.checkpoint_path
-        # os.path.join(self.checkpoint_dir, "04-22-11.pkl")
+        self.test_checkpoint = self.checkpoint_path
+        # self.test_checkpoint = os.path.join(self.checkpoint_dir, "no_feature.pkl")
 
         self.data_dir = os.path.join(curpath, "coerkb")  # Path of input data dir
         self.train_path = os.path.join(self.data_dir, "train.txt")     # !!!!!!!!!!!!!!!!!!!!!!
@@ -49,7 +49,7 @@ class Flags(object):
         self.learning_rate = 3.e-5
         self.epoch = 100
         self.batch_size = 30
-        self.test_batch_size = 4
+        self.test_batch_size = 8
         self.max_length = 256
         self.dropout_rate = 0.5
         self.weight_decay = 1.e-3

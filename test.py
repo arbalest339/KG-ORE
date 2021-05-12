@@ -12,7 +12,7 @@ from models.qaore_model import OREModel
 from data_reader import OREDataset
 from config import FLAGS
 
-os.environ["CUDA_VISIBLE_DEVICES"] = '1'
+os.environ["CUDA_VISIBLE_DEVICES"] = '2'
 
 
 def en_metrics(e1, e2, r, tag_seq):
@@ -132,8 +132,8 @@ def test():
         model.zero_grad()
         _, slogits, elogits = model(data)
         start_id, end_id = data["start_id"], data["end_id"]
-        start_id = start_id.squeeze().cpu().numpy().tolist()
-        end_id = end_id.squeeze().cpu().numpy().tolist()
+        start_id = start_id.squeeze(dim=-1).cpu().numpy().tolist()
+        end_id = end_id.squeeze(dim=-1).cpu().numpy().tolist()
         pred_s = slogits.cpu().detach().numpy().tolist()
         pred_e = elogits.cpu().detach().numpy().tolist()
         for gs, ge, ps, pe in zip(start_id, end_id, pred_s, pred_e):
