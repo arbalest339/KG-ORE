@@ -21,7 +21,7 @@ class OREDataset(data.Dataset):
         self.tokenizer = tokenizer
         self.knowledges = FLAGS.knowledges
 
-        with open(data_path) as rf:
+        with open(data_path, encoding="utf-8") as rf:
             self.datas = rf.readlines()
             self.num_example = len(self.datas)
 
@@ -47,70 +47,47 @@ class OREDataset(data.Dataset):
             kbRel = line["kbRel"]
 
         # 数字化
-        if not self.knowledges or ("kbRel" in self.knowledges and len(self.knowledges) == 1):  # 无辅助信息
-            if "kbRel" in self.knowledges and kbRel:
-                kbRel = line["kbRel"]
-                triples = [query.replace("?", f" {rel} ") for rel in kbRel]
-                query = "或者".join(triples)
-            inputs = self.tokenizer(query, text, padding='max_length', truncation=True, max_length=self.max_length, return_tensors='pt')
-            input_ids, mask, type_ids = \
-                inputs["input_ids"].squeeze(), inputs["attention_mask"].squeeze(), inputs["token_type_ids"].squeeze()
+        text = self.tokenizer(text, padding='max_length', truncation=True, max_length=self.max_length, return_tensors='pt')
+        text = text["input_ids"].squeeze()
+        text = torch.LongTensor(text).cuda() if self.use_cuda else torch.LongTensor(text)
+        start_id = torch.LongTensor([start_id]).cuda() if self.use_cuda else torch.LongTensor([start_id])
+        end_id = torch.LongTensor([end_id]).cuda() if self.use_cuda else torch.LongTensor([end_id])
 
-            # tensor化
-            if self.use_cuda:
-                input_ids, mask, type_ids = input_ids.cuda(), mask.cuda(), type_ids.cuda()
-                start_id = torch.LongTensor([start_id]).cuda()
-                end_id = torch.LongTensor([end_id]).cuda()
-            else:
-                start_id, end_id = torch.LongTensor([start_id]), torch.LongTensor([end_id])
-            example["input_ids"] = input_ids
-            example["mask"] = mask
-            example["type_ids"] = type_ids
-            example["start_id"] = start_id
-            example["end_id"] = end_id
-            return example
+        if "kbRel" in self.knowledges and kbRel:
+            kbRel = line["kbRel"]
+            triples = [query.replace("?", f" {rel} ") for rel in kbRel]
+            query = "，".join(triples)
+            query = self.tokenizer(query, padding='max_length', truncation=True, max_length=self.max_length // 2, return_tensors='pt')
+            query = query["input_ids"].squeeze()
         else:
-            text = self.tokenizer(text, padding='max_length', truncation=True, max_length=self.max_length, return_tensors='pt')
-            text = text["input_ids"].squeeze()
-            text = torch.LongTensor(text).cuda() if self.use_cuda else torch.LongTensor(text)
-            start_id = torch.LongTensor([start_id]).cuda() if self.use_cuda else torch.LongTensor([start_id])
-            end_id = torch.LongTensor([end_id]).cuda() if self.use_cuda else torch.LongTensor([end_id])
+            query = self.tokenizer(query, padding='max_length', truncation=True, max_length=self.max_length // 2, return_tensors='pt')
+            query = query["input_ids"].squeeze()
+        query = torch.LongTensor(query).cuda() if self.use_cuda else torch.LongTensor(query)
 
-            if "kbRel" in self.knowledges and kbRel:
-                kbRel = line["kbRel"]
-                triples = [query.replace("?", f" {rel} ") for rel in kbRel]
-                query = "或者".join(triples)
-                query = self.tokenizer(query, padding='max_length', truncation=True, max_length=self.max_length, return_tensors='pt')
-                query = query["input_ids"].squeeze()
-            else:
-                query = self.tokenizer(query, padding='max_length', truncation=True, max_length=self.max_length, return_tensors='pt')
-                query = query["input_ids"].squeeze()
-            query = torch.LongTensor(query).cuda() if self.use_cuda else torch.LongTensor(query)
+        example["text"] = text
+        example["query"] = query
+        example["start_id"] = start_id
+        example["end_id"] = end_id
 
-            example["text"] = text
-            example["query"] = query
-            example["start_id"] = start_id
-            example["end_id"] = end_id
-
-            if "desc" in self.knowledges:
-                desc1 = self.tokenizer(desc1, padding='max_length', truncation=True, max_length=self.max_length, return_tensors='pt')
-                desc2 = self.tokenizer(desc2, padding='max_length', truncation=True, max_length=self.max_length, return_tensors='pt')
-                desc1 = desc1["input_ids"].squeeze()
-                desc2 = desc2["input_ids"].squeeze()
-                desc1 = torch.LongTensor(desc1).cuda() if self.use_cuda else torch.LongTensor(desc1)
-                desc2 = torch.LongTensor(desc2).cuda() if self.use_cuda else torch.LongTensor(desc2)
-                example["desc1"] = desc1
-                example["desc2"] = desc2
-            if "exrest" in self.knowledges:
-                exrest1 = self.tokenizer(exrest1, padding='max_length', truncation=True, max_length=self.max_length, return_tensors='pt')
-                exrest2 = self.tokenizer(exrest2, padding='max_length', truncation=True, max_length=self.max_length, return_tensors='pt')
-                exrest1 = exrest1["input_ids"].squeeze()
-                exrest2 = exrest2["input_ids"].squeeze()
-                exrest1 = torch.LongTensor(exrest1).cuda() if self.use_cuda else torch.LongTensor(exrest1)
-                exrest2 = torch.LongTensor(exrest2).cuda() if self.use_cuda else torch.LongTensor(exrest2)
-                example["exrest1"] = exrest1
-                example["exrest2"] = exrest2
-            return example
+        if "desc" in self.knowledges:
+            desc1 = self.tokenizer(desc1, padding='max_length', truncation=True, max_length=self.max_length, return_tensors='pt')
+            desc2 = self.tokenizer(desc2, padding='max_length', truncation=True, max_length=self.max_length, return_tensors='pt')
+            desc1 = desc1["input_ids"].squeeze()
+            desc2 = desc2["input_ids"].squeeze()
+            desc1 = torch.LongTensor(desc1).cuda() if self.use_cuda else torch.LongTensor(desc1)
+            desc2 = torch.LongTensor(desc2).cuda() if self.use_cuda else torch.LongTensor(desc2)
+            example["desc1"] = desc1
+            example["desc2"] = desc2
+        if "exrest" in self.knowledges:
+            exrest1 = self.tokenizer(exrest1, padding='max_length', truncation=True, max_length=self.max_length, return_tensors='pt')
+            exrest2 = self.tokenizer(exrest2, padding='max_length', truncation=True, max_length=self.max_length, return_tensors='pt')
+            exrest1 = exrest1["input_ids"].squeeze()
+            exrest2 = exrest2["input_ids"].squeeze()
+            exrest1 = torch.LongTensor(exrest1).cuda() if self.use_cuda else torch.LongTensor(exrest1)
+            exrest2 = torch.LongTensor(exrest2).cuda() if self.use_cuda else torch.LongTensor(exrest2)
+            example["exrest1"] = exrest1
+            example["exrest2"] = exrest2
+        return example
 
     def getOrigin(self, idx):
         line = self.datas[idx]

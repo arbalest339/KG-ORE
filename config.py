@@ -29,12 +29,12 @@ class Flags(object):
         self.pretrain_checkpoint = os.path.join(
             self.checkpoint_dir, "03-19-10.pkl")
         self.test_checkpoint = self.checkpoint_path
-        # self.test_checkpoint = os.path.join(self.checkpoint_dir, "no_feature.pkl")
+        # self.test_checkpoint = "checkpoints/no_best.pkl"
 
         self.data_dir = os.path.join(curpath, "coerkb")  # Path of input data dir
         self.train_path = os.path.join(self.data_dir, "train.txt")     # !!!!!!!!!!!!!!!!!!!!!!
         self.dev_path = os.path.join(self.data_dir, "dev.txt")
-        self.test_path = os.path.join(self.data_dir, "test.txt")
+        self.test_path = os.path.join(self.data_dir, "testWithRel.txt")
         # self.test_path = os.path.join("zh_data", "all.txt")
         # self.train_mat = os.path.join(self.data_dir, f"{self.data_set}_train_matrixs.npy")
         # self.dev_mat = os.path.join(self.data_dir, f"{self.data_set}_dev_matrixs.npy")
@@ -48,10 +48,10 @@ class Flags(object):
         # train hyper parameters
         self.learning_rate = 3.e-5
         self.epoch = 100
-        self.batch_size = 30
+        self.batch_size = 50
         self.test_batch_size = 8
-        self.max_length = 256
-        self.dropout_rate = 0.5
+        self.max_length = 128
+        self.dropout_rate = 0.7
         self.weight_decay = 1.e-3
         self.patient = 3
         self.use_cuda = True
@@ -63,7 +63,7 @@ class Flags(object):
 
         # model choice
         self.use_knowledge = False
-        self.knowledges = ["kbRel"]   # ["desc", "exrest", "kbRel"]
+        self.knowledges = []   # ["desc", "exrest", "kbRel"]
 
         # QA full connection
         self.qa_hidden = 300

@@ -60,7 +60,7 @@ def eval(model, validset_loader):
     return f1
 
 
-def main():
+def main(best_f1=0.0):
     # load from pretrained config file
     # bertconfig = json.load(open(FLAGS.pretrained_config))
     bertconfig = BertConfig.from_pretrained(FLAGS.pretrained)
@@ -87,7 +87,6 @@ def main():
     scheduler = ReduceLROnPlateau(optimizer, 'min', verbose=1, patience=2, factor=0.5, min_lr=1.e-8)
     # scheduler = CosineAnnealingLR(optimizer, T_max=(FLAGS.epoch // 9) + 1)
     # best_loss = 100
-    best_acc = 0.0
     # patience = FLAGS.patient
 
     print("Start training", time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
@@ -110,8 +109,8 @@ def main():
         print(f"[{epoch + 1}/{FLAGS.epoch}] trainset mean_loss: {train_loss: 0.4f}")
 
         f1 = eval(model, validset_loader)
-        if f1 > best_acc:
-            best_acc = f1
+        if f1 > best_f1:
+            best_f1 = f1
             print('Saving model...  ', time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
             torch.save(model.state_dict(), FLAGS.checkpoint_path)
             print('Saving model finished.  ', time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
