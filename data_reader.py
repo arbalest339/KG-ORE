@@ -45,10 +45,10 @@ class OREDataset(data.Dataset):
                 kbRel = line["kbRel"]
                 triples = [query.replace("?", f" {rel} ") for rel in kbRel]
                 query = "，".join(triples)
-                query = self.tokenizer(query, padding='max_length', truncation=True, max_length=self.max_length // 2, return_tensors='pt')
+                query = self.tokenizer(query, padding='max_length', truncation=True, max_length=self.max_length // 3, return_tensors='pt')
                 query = query["input_ids"].squeeze()
             else:
-                query = self.tokenizer(query, padding='max_length', truncation=True, max_length=self.max_length // 2, return_tensors='pt')
+                query = self.tokenizer(query, padding='max_length', truncation=True, max_length=self.max_length // 3, return_tensors='pt')
                 query = query["input_ids"].squeeze()
             query = torch.LongTensor(query).cuda() if self.use_cuda else torch.LongTensor(query)
             example["query"] = query
@@ -67,15 +67,18 @@ class OREDataset(data.Dataset):
                 elif i < len(ent):
                     ent[i] = self.ent_map["I-E2"]
             example["ent"] = ent
+
         gold = [self.rel_map["O"]] * self.max_length
         for i in range(answer[0], answer[1]):
             if i == answer[0] and i < len(gold):
                 gold[i] = self.rel_map["B-R"]
             elif i < len(gold):
                 gold[i] = self.rel_map["I-R"]
-        text = self.tokenizer(text, padding='max_length', truncation=True, max_length=self.max_length, return_tensors='pt')
-        text = text["input_ids"].squeeze()
-        mask = text["attention_mask"].squeeze()
+        gold = torch.LongTensor(gold).cuda() if self.use_cuda else torch.LongTensor(gold)
+
+        tokenize = self.tokenizer(text, padding='max_length', truncation=True, max_length=self.max_length, return_tensors='pt')
+        text = tokenize["input_ids"].squeeze()
+        mask = tokenize["attention_mask"].squeeze()
         text = torch.LongTensor(text).cuda() if self.use_cuda else torch.LongTensor(text)
         mask = torch.LongTensor(mask).cuda() if self.use_cuda else torch.LongTensor(mask)
 

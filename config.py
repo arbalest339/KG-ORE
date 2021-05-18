@@ -32,7 +32,7 @@ class Flags(object):
             self.checkpoint_dir, "03-24-16.pkl")
 
         self.data_dir = os.path.join(
-            curpath, "zh_data")  # Path of input data dir
+            curpath, "coerkb")  # Path of input data dir
         self.train_path = os.path.join(
             self.data_dir, "train.txt")     # !!!!!!!!!!!!!!!!!!!!!!
         self.dev_path = os.path.join(
@@ -45,7 +45,7 @@ class Flags(object):
 
         # Path of output results dir
         self.out_dir = os.path.join(curpath, "out")
-        self.record_path = os.path.join(self.out_dir, "ner_record.txt")
+        self.record_path = os.path.join(self.out_dir, "ore_record.txt")
 
         # train hyper parameters
         self.learning_rate = 3.e-5

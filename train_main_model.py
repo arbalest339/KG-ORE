@@ -73,8 +73,8 @@ def main():
     # load data
     print("Loading traning and valid data")
     tokenizer = BertTokenizer.from_pretrained(FLAGS.pretrained)
-    train_set = OREDataset(FLAGS.train_path, tokenizer, FLAGS.max_length, mode="train")
-    dev_set = OREDataset(FLAGS.dev_path, tokenizer, FLAGS.max_length, mode="test")
+    train_set = OREDataset(FLAGS.train_path, tokenizer, FLAGS.max_length)
+    dev_set = OREDataset(FLAGS.dev_path, tokenizer, FLAGS.max_length)
     trainset_loader = torch.utils.data.DataLoader(train_set, FLAGS.batch_size, num_workers=0, drop_last=True, shuffle=True)
     validset_loader = torch.utils.data.DataLoader(dev_set, FLAGS.test_batch_size, num_workers=0, drop_last=True, shuffle=True)
 

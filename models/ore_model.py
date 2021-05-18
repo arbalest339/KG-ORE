@@ -10,14 +10,16 @@ import torch
 from torch import log_softmax
 import torch.nn as nn
 from torch.nn.modules.loss import CrossEntropyLoss
-from transformers import BertForTokenClassification
+from transformers import BertModel
 from torchcrf import CRF
+
+from models.Attention import BasicAttention
 
 
 class OREModel(nn.Module):
     def __init__(self, flags, bertconfig):
         super(OREModel, self).__init__()
-        self.label_num = len(flags.label_map)
+        self.label_num = len(flags.rel_map)
         bertconfig.num_labels = self.label_num
         bertconfig.return_dict = True
         bertconfig.output_hidden_states = True
@@ -27,19 +29,19 @@ class OREModel(nn.Module):
         self.decoder = flags.decoder
 
         # local bert
-        self.bert = BertForTokenClassification.from_pretrained(
-            flags.pretrained, config=bertconfig)
+        self.bert = BertModel.from_pretrained(flags.pretrained, config=bertconfig)
         self.bn = nn.BatchNorm1d(flags.max_length)
         self.dropout = nn.Dropout(flags.dropout_rate)
 
         # feature fuse
         if self.fuse == "att":
-            self.att = BasicAttention()
-
-        # full connection layers
-        self.concat2tag = nn.Linear(
-            flags.feature_dim*len(self.features)+bertconfig.hidden_size, self.label_num)
-        # self.concat2tag = nn.Linear(flags.feature_dim*4, self.label_num)
+            self.att = BasicAttention(bertconfig.hidden_size, bertconfig.hidden_size, bertconfig.hidden_size)
+            # full connection layers
+            self.concat2tag = nn.Linear(bertconfig.hidden_size, self.label_num)
+        else:
+            self.entEmb = nn.Embedding(len(flags.ent_map), embedding_dim=flags.feature_dim)
+            # full connection layers
+            self.concat2tag = nn.Linear(bertconfig.hidden_size, self.label_num)
 
         # decode layer
         if self.decoder == "crf":
@@ -47,26 +49,29 @@ class OREModel(nn.Module):
         else:
             self.loss = nn.CrossEntropyLoss()
 
-    def forward(self, token, pos, gold, mask, acc_mask):
+    def forward(self, example):
+        token = example["text"]
+        mask = example["mask"]
+        gold = example["gold"]
+        token = self.bert(token, attention_mask=mask)[0]
+        token_emb = self.dropout(token)
+
+        if self.fuse == "att":
+            query = example["query"]
+            query = self.bert(query)[0]
+            # batch_size, max_length, bert_hidden
+            logits = self.att(query, query, token_emb)
+        else:
+            ent = example["ent"]
+            logits = torch.cat([token_emb, ent], dim=-1)
         # BERT's last hidden layer
-        bert_hidden = self.bert(
-            token, labels=gold, attention_mask=mask).hidden_states[-1]
-        bert_hidden = self.bn(bert_hidden)
-        # batch_size, max_length, bert_hidden
-        token_emb = self.dropout(bert_hidden)
-        if "pos" in self.features:
-            pos_emb = self.posEmb(pos)
 
         # feature concat, fc layer
-        logits = token_emb
-        if "pos" in self.features:
-            logits = torch.cat([logits, pos_emb], dim=-1)
         logits = self.concat2tag(logits)
 
         if self.decoder == "crf":
             # crf loss
-            loss = - self.crf_layer(logits, gold,
-                                    mask=acc_mask, reduction="mean")
+            loss = - self.crf_layer(logits, gold, mask=mask, reduction="mean")
             loss += - self.crf_layer(logits, gold, mask=mask, reduction="mean")
             pred = torch.Tensor(self.crf_layer.decode(logits)).cuda()
         else:
@@ -76,27 +81,29 @@ class OREModel(nn.Module):
 
         zero = torch.zeros(*gold.shape, dtype=gold.dtype).cuda()
         eq = torch.eq(pred, gold.float())
-        acc = torch.sum(eq * acc_mask.float()) / torch.sum(acc_mask.float())
+        acc = torch.sum(eq * mask.float()) / torch.sum(mask.float())
         zero_acc = torch.sum(torch.eq(zero, gold.float())
                              * mask.float()) / torch.sum(mask.float())
 
         return loss, acc, zero_acc
 
-    def decode(self, token, pos, mask):
-        # BERT's last hidden layer
-        bert_hidden = self.bert(
-            token, attention_mask=mask).hidden_states[-1]
-        bert_hidden = self.bn(bert_hidden)
-        # batch_size, max_length, bert_hidden
-        token_emb = self.dropout(bert_hidden)
+    def decode(self, example):
+        token = example["text"]
+        mask = example["mask"]
+        token = self.bert(token, attention_mask=mask)[0]
+        token_emb = self.dropout(token)
 
-        if "pos" in self.features:
-            pos_emb = self.posEmb(pos)
+        if self.fuse == "att":
+            query = example["query"]
+            query = self.bert(query)[0]
+            # batch_size, max_length, bert_hidden
+            logits = self.att(query, query, token_emb)
+        else:
+            ent = example["ent"]
+            logits = torch.cat([token_emb, ent], dim=-1)
+        # BERT's last hidden layer
 
         # feature concat, fc layer
-        logits = token_emb
-        if "pos" in self.features:
-            logits = torch.cat([logits, pos_emb], dim=-1)
         logits = self.concat2tag(logits)
 
         if self.decoder == "crf":

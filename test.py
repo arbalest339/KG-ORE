@@ -125,11 +125,10 @@ def test():
     negative_false = 0
     errorsExps = []
     model.eval()
-    for i, data in enumerate(testset_loader):
-        token, pos, golds, mask = data
+    for i, example in enumerate(testset_loader):
         model.zero_grad()
-        tag_seq = model.decode(token, pos, mask)
-        golds = golds.cpu().numpy().tolist()
+        tag_seq = model.decode(example)
+        golds = example["gold"].cpu().numpy().tolist()
         # tag_seq = tag_seq.cpu().detach().numpy().tolist()
         # en_metrics(e1, e2, r, tag_seq) if FLAGS.language == "en" else
         for gold, seq in zip(golds, tag_seq):
