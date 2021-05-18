@@ -22,7 +22,8 @@ class OREModel(nn.Module):
         bertconfig.return_dict = True
         bertconfig.output_hidden_states = True
 
-        self.features = flags.features
+        self.fuse = flags.fuse
+        self.knowledges = flags.knowledges
         self.decoder = flags.decoder
 
         # local bert
@@ -31,9 +32,9 @@ class OREModel(nn.Module):
         self.bn = nn.BatchNorm1d(flags.max_length)
         self.dropout = nn.Dropout(flags.dropout_rate)
 
-        # feature emb
-        if "pos" in self.features:
-            self.posEmb = nn.Embedding(len(flags.pos_map), flags.feature_dim)
+        # feature fuse
+        if self.fuse == "att":
+            self.att = BasicAttention()
 
         # full connection layers
         self.concat2tag = nn.Linear(

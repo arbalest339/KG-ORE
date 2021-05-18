@@ -1,6 +1,13 @@
-"""
-read training/test/predict data
-"""
+'''
+Author: your name
+Date: 2021-04-13 09:07:21
+LastEditTime: 2021-05-05 17:20:03
+LastEditors: Please set LastEditors
+Description: In User Settings Edit
+FilePath: /code_for_ore/data_reader.py
+'''
+
+
 from config import FLAGS
 import json
 import torch
@@ -8,126 +15,81 @@ import torch.utils.data as data
 
 
 class OREDataset(data.Dataset):
-    def __init__(self, data_path, tokenizer, max_length, mode, use_cuda=True):
+    def __init__(self, data_path, tokenizer, max_length, use_cuda=True):
         self.use_cuda = use_cuda
-        self.max_length = max_length - 2
+        self.max_length = max_length
         self.tokenizer = tokenizer
-        self.mode = mode
+        self.ent_map = FLAGS.ent_map
+        self.rel_map = FLAGS.rel_map
+        self.knowledges = FLAGS.knowledges
+        self.fuse = FLAGS.fuse
 
-        self.label_map = FLAGS.label_map
-        with open(data_path) as rf:
+        with open(data_path, encoding="utf-8") as rf:
             self.datas = rf.readlines()
             self.num_example = len(self.datas)
 
-    def load_train(self, line):
+    def loadSample(self, line):
+        example = {}
         line = json.loads(line)
-        if "gold" in line:
-            token, gold = list(line["token"]), line["gold"]
+        if "query" in line:
+            text, query, answer = line["text"], line["query"], line["answer"]
+            e1, e2 = query.split("?")
         else:
-            token, gold = list(line["token"]), line["ner"]
-        if "pos" in FLAGS.features:
-            pos = line["pos"]
+            text, e1, e2, answer = line["text"], line["e1"], line["e2"], line["answer"]
+        if "kbRel" in self.knowledges:
+            kbRel = line["kbRel"]
+
+        if self.fuse == "att":
+            query = f"{e1}?{e2}"
+            if "kbRel" in self.knowledges and kbRel:
+                kbRel = line["kbRel"]
+                triples = [query.replace("?", f" {rel} ") for rel in kbRel]
+                query = "，".join(triples)
+                query = self.tokenizer(query, padding='max_length', truncation=True, max_length=self.max_length // 2, return_tensors='pt')
+                query = query["input_ids"].squeeze()
+            else:
+                query = self.tokenizer(query, padding='max_length', truncation=True, max_length=self.max_length // 2, return_tensors='pt')
+                query = query["input_ids"].squeeze()
+            query = torch.LongTensor(query).cuda() if self.use_cuda else torch.LongTensor(query)
+            example["query"] = query
         else:
-            pos = [0]*len(token)
-        gold = ["O" if tag == "O" or "REL" in tag else tag for tag in gold]
+            e1_idx = text.index(e1) + 1
+            e2_idx = text.index(e2) + 1
+            ent = [self.ent_map["O"]] * self.max_length
+            for i in range(e1_idx, e1_idx+len(e1)):
+                if i == e1_idx and i < len(ent):
+                    ent[i] = self.ent_map["B-E1"]
+                elif i < len(ent):
+                    ent[i] = self.ent_map["I-E1"]
 
-        # padding
-        token_length = len(token)
-        pad_length = self.max_length - token_length
-        if pad_length >= 0:
-            # BERT special token
-            token = ["[CLS]"] + token + ["[SEP]"]
-            pos = [0] + pos + [0]
-            gold = ["O"] + gold + ["O"]
-            # padding
-            token += ["[PAD]"] * pad_length
-            pos += [0] * pad_length
-            gold += ["O"] * pad_length
-            # mask pad
-            mask = [1] * (token_length + 2) + [0] * pad_length
-        else:
-            token = ["[CLS]"] + token[:self.max_length] + ["[SEP]"]
-            pos = [0] + pos[:self.max_length] + [0]
-            gold = ["O"] + gold[:self.max_length] + ["O"]
-            mask = [1] * (self.max_length + 2)
+                if i == e2_idx and i < len(ent):
+                    ent[i] = self.ent_map["B-E2"]
+                elif i < len(ent):
+                    ent[i] = self.ent_map["I-E2"]
+            example["ent"] = ent
+        gold = [self.rel_map["O"]] * self.max_length
+        for i in range(answer[0], answer[1]):
+            if i == answer[0] and i < len(gold):
+                gold[i] = self.rel_map["B-R"]
+            elif i < len(gold):
+                gold[i] = self.rel_map["I-R"]
+        text = self.tokenizer(text, padding='max_length', truncation=True, max_length=self.max_length, return_tensors='pt')
+        text = text["input_ids"].squeeze()
+        mask = text["attention_mask"].squeeze()
+        text = torch.LongTensor(text).cuda() if self.use_cuda else torch.LongTensor(text)
+        mask = torch.LongTensor(mask).cuda() if self.use_cuda else torch.LongTensor(mask)
 
-        acc_mask = [1 if g != "O" else 0 for g in gold]
-        acc_mask[0] = 1
-
-        # 数字化
-        token = self.tokenizer.convert_tokens_to_ids(token)
-        gold = [self.label_map[g] for g in gold]
-
-        # tensor化
-        token = torch.LongTensor(token).cuda(
-        ) if self.use_cuda else torch.LongTensor(token)
-        pos = torch.LongTensor(pos).cuda(
-        ) if self.use_cuda else torch.LongTensor(pos)
-        gold = torch.LongTensor(gold).cuda(
-        ) if self.use_cuda else torch.LongTensor(gold)
-        # dp = torch.LongTensor(dp).cuda(
-        # ) if self.use_cuda else torch.LongTensor(dp)
-        # head = torch.LongTensor(head).cuda(
-        # ) if self.use_cuda else torch.LongTensor(head)
-        mask = torch.BoolTensor(mask).cuda(
-        ) if self.use_cuda else torch.BoolTensor(mask)
-        acc_mask = torch.BoolTensor(acc_mask).cuda(
-        ) if self.use_cuda else torch.BoolTensor(acc_mask)
-        return [token, pos, gold, mask, acc_mask]
-
-    def load_test(self, line):
-        line = json.loads(line)
-        # 文件中读取基础数据
-        if "gold" in line:
-            token, gold = list(line["token"]), line["gold"]
-        else:
-            token, gold = list(line["token"]), line["ner"]
-        if "pos" in FLAGS.features:
-            pos = line["pos"]
-        else:
-            pos = [0]*len(token)
-        gold = ["O" if tag == "O" or "REL" in tag else tag for tag in gold]
-
-        # padding
-        token_length = len(token)
-        pad_length = self.max_length - token_length
-        if pad_length >= 0:
-            # BERT special token
-            token = ["[CLS]"] + token + ["[SEP]"]
-            gold = ["O"] + gold + ["O"]
-            pos = [0] + pos + [0]
-            # padding
-            token += ["[PAD]"] * pad_length
-            pos += [0] * pad_length
-            gold += ["O"] * pad_length
-            # dp arcs pad
-            # mask pad
-            mask = [1] * (token_length + 2) + [0] * pad_length
-        else:
-            token = ["[CLS]"] + token[:self.max_length] + ["[SEP]"]
-            gold = ["O"] + gold[:self.max_length] + ["O"]
-            pos = [0] + pos[:self.max_length] + [0]
-            mask = [1] * (self.max_length + 2)
-        # 数字化
-        token = self.tokenizer.convert_tokens_to_ids(token)
-        gold = [self.label_map[g] for g in gold]
-
-        # tensor化
-        token = torch.LongTensor(token).cuda(
-        ) if self.use_cuda else torch.LongTensor(token)
-        pos = torch.LongTensor(pos).cuda(
-        ) if self.use_cuda else torch.LongTensor(pos)
-        gold = torch.LongTensor(gold).cuda(
-        ) if self.use_cuda else torch.LongTensor(gold)
-        mask = torch.ByteTensor(mask).cuda(
-        ) if self.use_cuda else torch.ByteTensor(mask)
-
-        return [token, pos, gold, mask]
+        example["text"] = text
+        example["mask"] = mask
+        example["gold"] = gold
+        return example
 
     def getOrigin(self, idx):
         line = self.datas[idx]
         line = json.loads(line)
-        return list(line["token"]), line["ner"]
+        start = line["answer"][0]
+        end = line["answer"][1]
+        return [line["text"], line["query"], line["text"][start:end]]
 
     def __len__(self):
         return self.num_example
@@ -135,7 +97,4 @@ class OREDataset(data.Dataset):
     def __getitem__(self, idx):
         line = self.datas[idx]
         # 文件中读取基础数据
-        if self.mode == "train":
-            return self.load_train(line)
-        else:
-            return self.load_test(line)
+        return self.loadSample(line)

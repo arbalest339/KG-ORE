@@ -91,10 +91,9 @@ def main():
         losses = []
         accs = []
         with tqdm(total=len(train_set)//FLAGS.batch_size, desc=f'Epoch {epoch+1}/{FLAGS.epoch}', unit='it') as pbar:
-            for step, data in enumerate(trainset_loader):
-                token, pos, gold, mask, acc_mask = data
+            for step, example in enumerate(trainset_loader):
                 model.zero_grad()
-                loss, acc, zero_acc = model(token, pos, gold, mask, acc_mask)
+                loss, acc, zero_acc = model(example)
                 losses.append(loss.data.item())
                 accs.append(acc.data.item())
                 # backward

@@ -64,7 +64,8 @@ class Flags(object):
         self.margin = 4.0
 
         # model choice
-        self.features = []   # ["dp", "pos", "ner"]
+        self.fuse = "att"  # "att", "pointer"
+        self.knowledges = ["kbRel"]   # ["dp", "pos", "ner"]
         self.decoder = "crf"  # crf, softmax
 
         # lstm
@@ -72,12 +73,10 @@ class Flags(object):
         self.n_layers = 2
 
         # global datas
-        self.label_map = {"O": 0, "B-PER": 1, "I-PER": 2, "B-ORG": 3, "I-ORG": 4,
-                          "B-LOC": 5, "I-LOC": 6, "B-REG": 7, "I-REG": 8, "B-OTH": 9, "I-OTH": 10}
+        self.ent_map = {"O": 0, "B-E1": 1, "I-E1": 2, "B-E2": 3, "I-E2": 4}
         # self.dp_map = json.load(
         #     open(os.path.join(self.data_dir, "dp_map.json")))
-        self.pos_map = json.load(
-            open(os.path.join(self.data_dir, "pos_map.json")))
+        self.rel_map = {"O": 0, "B-R": 1, "I-R": 2}
 
 
 FLAGS = Flags()
