@@ -60,7 +60,7 @@ class OREModel(nn.Module):
             query = example["query"]
             query = self.bert(query)[0]
             # batch_size, max_length, bert_hidden
-            logits = self.att(query, query, token_emb)
+            logits = self.att(query, token_emb, token_emb)
         else:
             ent = example["ent"]
             logits = torch.cat([token_emb, ent], dim=-1)
@@ -97,7 +97,7 @@ class OREModel(nn.Module):
             query = example["query"]
             query = self.bert(query)[0]
             # batch_size, max_length, bert_hidden
-            logits = self.att(query, query, token_emb)
+            logits = self.att(query, token_emb, token_emb)
         else:
             ent = example["ent"]
             logits = torch.cat([token_emb, ent], dim=-1)
