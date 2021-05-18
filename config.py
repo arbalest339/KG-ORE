@@ -50,7 +50,7 @@ class Flags(object):
         # train hyper parameters
         self.learning_rate = 3.e-5
         self.epoch = 100
-        self.batch_size = 30
+        self.batch_size = 20
         self.test_batch_size = 1
         self.max_length = 128
         self.dropout_rate = 0.5

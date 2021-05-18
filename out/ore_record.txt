@@ -95,3 +95,6 @@ Precision:  0.7606, Recall:  0.7180, F1:  0.7387
 Precision:  0.7815, Recall:  0.6331, F1:  0.6995
 
 Precision:  0.7686, Recall:  0.7239, F1:  0.7456
+Precision:  0.8032, Recall:  0.8801, F1:  0.8399
+Precision:  0.8328, Recall:  0.9443, F1:  0.8851
+Precision:  0.8599, Recall:  0.9534, F1:  0.9042

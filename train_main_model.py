@@ -33,10 +33,10 @@ def test(model, validset_loader):
     positive_false = 0
     negative_false = 0
     model.eval()
-    for token, pos, golds, mask in validset_loader:
+    for example in validset_loader:
         model.zero_grad()
-        tag_seq = model.decode(token, pos, mask)
-        golds = golds.cpu().numpy().tolist()
+        tag_seq = model.decode(example)
+        golds = example["gold"].cpu().numpy().tolist()
         # tag_seq = tag_seq.cpu().detach().numpy().tolist()
         # en_metrics(e1, e2, r, tag_seq) if FLAGS.language == "en" else
         for gold, seq in zip(golds, tag_seq):

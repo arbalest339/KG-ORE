@@ -53,6 +53,7 @@ class OREModel(nn.Module):
         token = example["text"]
         mask = example["mask"]
         gold = example["gold"]
+        acc_mask = example["acc_mask"]
         token = self.bert(token, attention_mask=mask)[0]
         token_emb = self.dropout(token)
 
@@ -71,7 +72,7 @@ class OREModel(nn.Module):
 
         if self.decoder == "crf":
             # crf loss
-            loss = - self.crf_layer(logits, gold, mask=mask, reduction="mean")
+            loss = - self.crf_layer(logits, gold, mask=acc_mask, reduction="mean")
             loss += - self.crf_layer(logits, gold, mask=mask, reduction="mean")
             pred = torch.Tensor(self.crf_layer.decode(logits)).cuda()
         else:
@@ -81,7 +82,7 @@ class OREModel(nn.Module):
 
         zero = torch.zeros(*gold.shape, dtype=gold.dtype).cuda()
         eq = torch.eq(pred, gold.float())
-        acc = torch.sum(eq * mask.float()) / torch.sum(mask.float())
+        acc = torch.sum(eq * acc_mask.float()) / torch.sum(acc_mask.float())
         zero_acc = torch.sum(torch.eq(zero, gold.float())
                              * mask.float()) / torch.sum(mask.float())
 
