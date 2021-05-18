@@ -24,17 +24,18 @@ class Flags(object):
         self.pretrained = "bert-base-chinese"
         self.checkpoint_dir = os.path.join(
             curpath, "checkpoints")  # Path of model checkpoints
-        self.checkpoint_path = os.path.join(
-            self.checkpoint_dir, f"{time.strftime('%m-%d-%H', time.localtime(time.time()))}.pkl")
+        # self.checkpoint_path = os.path.join(
+        #     self.checkpoint_dir, f"{time.strftime('%m-%d-%H', time.localtime(time.time()))}.pkl")
+        self.checkpoint_path = "checkpoints/no_best.pkl"
         self.pretrain_checkpoint = os.path.join(
             self.checkpoint_dir, "03-19-10.pkl")
-        self.test_checkpoint = self.checkpoint_path
-        # self.test_checkpoint = "checkpoints/no_best.pkl"
+        # self.test_checkpoint = self.checkpoint_path
+        self.test_checkpoint = "checkpoints/no_best.pkl"
 
         self.data_dir = os.path.join(curpath, "coerkb")  # Path of input data dir
         self.train_path = os.path.join(self.data_dir, "train.txt")     # !!!!!!!!!!!!!!!!!!!!!!
         self.dev_path = os.path.join(self.data_dir, "dev.txt")
-        self.test_path = os.path.join(self.data_dir, "testWithRel.txt")
+        self.test_path = os.path.join(self.data_dir, "case_study")    # testWithRel
         # self.test_path = os.path.join("zh_data", "all.txt")
         # self.train_mat = os.path.join(self.data_dir, f"{self.data_set}_train_matrixs.npy")
         # self.dev_mat = os.path.join(self.data_dir, f"{self.data_set}_dev_matrixs.npy")
@@ -43,7 +44,7 @@ class Flags(object):
         # Path of output results dir
         self.out_dir = os.path.join(curpath, "out")
         self.record_path = os.path.join(self.out_dir, "ner_record.txt")
-        self.error_path = os.path.join(self.out_dir, "error.txt")
+        self.error_path = os.path.join(self.out_dir, "rel_error.txt")
 
         # train hyper parameters
         self.learning_rate = 3.e-5

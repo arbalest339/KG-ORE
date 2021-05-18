@@ -118,7 +118,7 @@ def test():
     print("Loading test data")
     tokenizer = BertTokenizer.from_pretrained(FLAGS.pretrained)
     test_set = OREDataset(FLAGS.test_path, tokenizer, FLAGS.max_length)
-    testset_loader = torch.utils.data.DataLoader(test_set, FLAGS.test_batch_size, num_workers=0, drop_last=True)
+    testset_loader = torch.utils.data.DataLoader(test_set, FLAGS.test_batch_size, num_workers=0, drop_last=False)
     wf = open("out/super.txt", "a")
     wf.write("Start testing " + str(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))) + "\n")
     print("Start testing", time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))

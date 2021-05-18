@@ -13,7 +13,7 @@ from config import FLAGS
 
 best_f1 = 0.0
 for i in range(5):
-    FLAGS.knowledges = ["kbRel"]
+    FLAGS.knowledges = []
     with open("out/super.txt", "a") as logf:
         logf.write(str(FLAGS.knowledges) + "\n")
     main(best_f1)

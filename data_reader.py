@@ -28,7 +28,11 @@ class OREDataset(data.Dataset):
     def loadSample(self, line):
         example = {}
         line = json.loads(line)
-        text, query, answer = line["text"], line["query"], line["answer"]
+        if "query" in line:
+            text, query, answer = line["text"], line["query"], line["answer"]
+        else:
+            text, e1, e2, answer = line["text"], line["e1"], line["e2"], line["answer"]
+            query = f"{e1}?{e2}"
         start_id = answer[0]    # + len(query)+2
         end_id = answer[1]  # + len(query)+2
         if "desc" in self.knowledges:

@@ -87,7 +87,7 @@ def main(best_f1=0.0):
     scheduler = ReduceLROnPlateau(optimizer, 'min', verbose=1, patience=2, factor=0.5, min_lr=1.e-8)
     # scheduler = CosineAnnealingLR(optimizer, T_max=(FLAGS.epoch // 9) + 1)
     # best_loss = 100
-    # patience = FLAGS.patient
+    patience = FLAGS.patient
 
     print("Start training", time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
     for epoch in range(FLAGS.epoch):
