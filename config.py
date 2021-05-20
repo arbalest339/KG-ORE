@@ -24,12 +24,12 @@ class Flags(object):
         self.pretrained = "bert-base-chinese"
         self.checkpoint_dir = os.path.join(
             curpath, "checkpoints")  # Path of model checkpoints
-        self.checkpoint_path = os.path.join(
-            self.checkpoint_dir, f"{time.strftime('%m-%d-%H', time.localtime(time.time()))}.pkl")
+        self.checkpoint_path = "checkpoints/no_sl.pkl"
         self.pretrain_checkpoint = os.path.join(
             self.checkpoint_dir, "03-19-10.pkl")
-        self.test_checkpoint = os.path.join(
-            self.checkpoint_dir, "03-24-16.pkl")
+        # self.test_checkpoint = os.path.join(
+        #     self.checkpoint_dir, "03-24-16.pkl")
+        self.test_checkpoint = "checkpoints/kbrel_sl.pkl"
 
         self.data_dir = os.path.join(
             curpath, "coerkb")  # Path of input data dir
@@ -38,7 +38,7 @@ class Flags(object):
         self.dev_path = os.path.join(
             self.data_dir, "dev.txt")
         self.test_path = os.path.join(
-            self.data_dir, "test.txt")
+            self.data_dir, "case.txt")
         # self.train_mat = os.path.join(self.data_dir, f"{self.data_set}_train_matrixs.npy")
         # self.dev_mat = os.path.join(self.data_dir, f"{self.data_set}_dev_matrixs.npy")
         # self.test_mat = os.path.join(self.data_dir, f"{self.data_set}_test_matrixs.npy")
@@ -51,7 +51,7 @@ class Flags(object):
         self.learning_rate = 3.e-5
         self.epoch = 100
         self.batch_size = 20
-        self.test_batch_size = 1
+        self.test_batch_size = 8
         self.max_length = 128
         self.dropout_rate = 0.5
         self.weight_decay = 1.e-3
@@ -65,7 +65,7 @@ class Flags(object):
 
         # model choice
         self.fuse = "att"  # "att", "pointer"
-        self.knowledges = ["kbRel"]   # ["dp", "pos", "ner"]
+        self.knowledges = []   # ["dp", "pos", "ner"]
         self.decoder = "crf"  # crf, softmax
 
         # lstm

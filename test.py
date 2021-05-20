@@ -88,9 +88,9 @@ def zh_metrics(gold, tag_seq):
     for g, t in zip(gold, tag_seq):
         if g == t and g != 0:
             positive_true += 1
-        elif t != 0 and g != t:
+        elif g != 0 and g != t:
             positive_false += 1
-        elif g != 0:
+        elif t != 0:
             negative_false += 1
 
     return positive_true, positive_false, negative_false
@@ -114,8 +114,8 @@ def test():
     # load data
     print("Loading test data")
     tokenizer = BertTokenizer.from_pretrained(FLAGS.pretrained)
-    test_set = OREDataset(FLAGS.test_path, tokenizer, FLAGS.max_length, mode="test")
-    testset_loader = torch.utils.data.DataLoader(test_set, FLAGS.test_batch_size, num_workers=0, drop_last=True)
+    test_set = OREDataset(FLAGS.test_path, tokenizer, FLAGS.max_length)
+    testset_loader = torch.utils.data.DataLoader(test_set, FLAGS.test_batch_size, num_workers=0, drop_last=False)
     wf = open("out/auto", "w")
     wf.write("Start testing " + str(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))) + "\n")
     print("Start testing", time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
@@ -136,9 +136,9 @@ def test():
             positive_true += pt
             positive_false += pf
             negative_false += nf
-            if pf > 0 or nf > 0:
-                orgtoken, orggold = test_set.getOrigin(i)
-                errorsExps.append([orgtoken, orggold])
+            # if pf > 0 or nf > 0:
+            #     orgtoken, orggold = test_set.getOrigin(i)
+            #     errorsExps.append([orgtoken, orggold])
 
     precision = positive_true / (positive_false + positive_true)
     recall = positive_true / (positive_true + negative_false)
@@ -149,9 +149,9 @@ def test():
     print('Testing finished.  ', time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
     wf.write("Testing finished " + str(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))) + "\n")
 
-    with open(FLAGS.train_path, "a") as tf:
-        for exp in errorsExps:
-            tf.write(json.dumps(exp, ensure_ascii=False))
+    # with open(FLAGS.train_path, "a") as tf:
+    #     for exp in errorsExps:
+    #         tf.write(json.dumps(exp, ensure_ascii=False))
     # for exp in pfExps:
     #     exp = [t+"/"+g+"/"+str(p) for t, g, p in zip(exp[0], exp[1], exp[2])]
     #     wf.write(str(exp)+"\n"+"\n")
