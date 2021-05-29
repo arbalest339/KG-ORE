@@ -36,10 +36,6 @@ class Flags(object):
         self.train_path = os.path.join(self.data_dir, "train.txt")     # !!!!!!!!!!!!!!!!!!!!!!
         self.dev_path = os.path.join(self.data_dir, "dev.txt")
         self.test_path = os.path.join(self.data_dir, "case_study")    # testWithRel
-        # self.test_path = os.path.join("zh_data", "all.txt")
-        # self.train_mat = os.path.join(self.data_dir, f"{self.data_set}_train_matrixs.npy")
-        # self.dev_mat = os.path.join(self.data_dir, f"{self.data_set}_dev_matrixs.npy")
-        # self.test_mat = os.path.join(self.data_dir, f"{self.data_set}_test_matrixs.npy")
 
         # Path of output results dir
         self.out_dir = os.path.join(curpath, "out")

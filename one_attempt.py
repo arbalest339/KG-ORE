@@ -13,50 +13,16 @@ from config import FLAGS
 
 best_f1 = 0.0
 for i in range(5):
-    FLAGS.knowledges = []
+    FLAGS.knowledges = ["kbRel"]
     with open("out/super.txt", "a") as logf:
         logf.write(str(FLAGS.knowledges) + "\n")
     main(best_f1)
     f1 = test()
     best_f1 = max(f1, best_f1)
-# FLAGS.knowledges = ["desc"]
-# with open("out/super.txt", "a") as logf:
-#     logf.write(str(FLAGS.knowledges) + "\n")
-# main()
-# test()
 
-# FLAGS.knowledges = ["exrest"]
-# with open("out/super.txt", "a") as logf:
-#     logf.write(str(FLAGS.knowledges) + "\n")
-# main()
-# test()
 # for i in range(5):
-#     FLAGS.knowledges = ["kbRel"]
+#     FLAGS.knowledges = []
 #     with open("out/super.txt", "a") as logf:
 #         logf.write(str(FLAGS.knowledges) + "\n")
 #     main()
 #     test()
-
-# FLAGS.knowledges = ["desc", "exrest"]
-# with open("out/super.txt", "a") as logf:
-#     logf.write(str(FLAGS.knowledges) + "\n")
-# main()
-# test()
-
-# FLAGS.knowledges = ["desc", "kbRel"]
-# with open("out/super.txt", "a") as logf:
-#     logf.write(str(FLAGS.knowledges) + "\n")
-# main()
-# test()
-
-# FLAGS.knowledges = ["exrest", "kbRel"]
-# with open("out/super.txt", "a") as logf:
-#     logf.write(str(FLAGS.knowledges) + "\n")
-# main()
-# test()
-
-# FLAGS.knowledges = ["desc", "exrest", "kbRel"]
-# with open("out/super.txt", "a") as logf:
-#     logf.write(str(FLAGS.knowledges) + "\n")
-# main()
-# test()
