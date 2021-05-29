@@ -88,9 +88,9 @@ def zh_metrics(gold, tag_seq):
     for g, t in zip(gold, tag_seq):
         if g == t and g != 0:
             positive_true += 1
-        elif g != 0 and g != t:
+        elif t != 0 and g != t:
             positive_false += 1
-        elif t != 0:
+        elif g != 0:
             negative_false += 1
 
     return positive_true, positive_false, negative_false
