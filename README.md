@@ -6,6 +6,7 @@ This repo contains the source code of the paper "Knowledge-guided Open Relation 
 ## 模型概述 Model
 模型的结构如下图所示：  
 The model's architecture is shown in the figure below:
+![image](https://user-images.githubusercontent.com/46928336/120064322-13885680-c09e-11eb-9e8d-1eff28d7b9a2.png)
 
 它使用了Attention机制实现了实体和背景知识与原文信息的融合  
 It combines the entity and background knowledge with the origin sentence
