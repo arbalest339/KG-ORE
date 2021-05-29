@@ -19,10 +19,7 @@ class OREDataset(data.Dataset):
         self.use_cuda = use_cuda
         self.max_length = max_length
         self.tokenizer = tokenizer
-        self.ent_map = FLAGS.ent_map
-        self.rel_map = FLAGS.rel_map
         self.knowledges = FLAGS.knowledges
-        self.fuse = FLAGS.fuse
 
         with open(data_path, encoding="utf-8") as rf:
             self.datas = rf.readlines()
@@ -33,63 +30,68 @@ class OREDataset(data.Dataset):
         line = json.loads(line)
         if "query" in line:
             text, query, answer = line["text"], line["query"], line["answer"]
-            e1, e2 = query.split("?")[:2]
         else:
             text, e1, e2, answer = line["text"], line["e1"], line["e2"], line["answer"]
+            query = f"{e1}?{e2}"
+        start_id = answer[0]    # + len(query)+2
+        end_id = answer[1]  # + len(query)+2
+        if "desc" in self.knowledges:
+            desc1, desc2 = line["desc1"], line["desc2"]
+            if not desc1:
+                desc1 = ""
+            if not desc2:
+                desc2 = ""
+        if "exrest" in self.knowledges:
+            exrest1, exrest2 = line["exrest1"], line["exrest2"]
+            if not exrest1:
+                exrest1 = ""
+            if not exrest2:
+                exrest2 = ""
         if "kbRel" in self.knowledges:
             kbRel = line["kbRel"]
 
-        if self.fuse == "att":
-            query = f"{e1}?{e2}"
-            if "kbRel" in self.knowledges and kbRel:
-                kbRel = line["kbRel"]
-                triples = [query.replace("?", f" {rel} ") for rel in kbRel]
-                query = "，".join(triples)
-                query = self.tokenizer(query, padding='max_length', truncation=True, max_length=self.max_length, return_tensors='pt')
-                query = query["input_ids"].squeeze()
-            else:
-                query = self.tokenizer(query, padding='max_length', truncation=True, max_length=self.max_length, return_tensors='pt')
-                query = query["input_ids"].squeeze()
-            query = torch.LongTensor(query).cuda() if self.use_cuda else torch.LongTensor(query)
-            example["query"] = query
-        else:
-            e1_idx = text.index(e1) + 1
-            e2_idx = text.index(e2) + 1
-            ent = [self.ent_map["O"]] * self.max_length
-            for i in range(e1_idx, e1_idx+len(e1)):
-                if i == e1_idx and i < len(ent):
-                    ent[i] = self.ent_map["B-E1"]
-                elif i < len(ent):
-                    ent[i] = self.ent_map["I-E1"]
-
-                if i == e2_idx and i < len(ent):
-                    ent[i] = self.ent_map["B-E2"]
-                elif i < len(ent):
-                    ent[i] = self.ent_map["I-E2"]
-            example["ent"] = ent
-
-        gold = [self.rel_map["O"]] * self.max_length
-        acc_mask = [0] * self.max_length
-        acc_mask[0] = 1
-        for i in range(answer[0], answer[1]):
-            if i == answer[0] and i < len(gold):
-                gold[i] = self.rel_map["B-R"]
-            elif i < len(gold):
-                gold[i] = self.rel_map["I-R"]
-            acc_mask[i] = 1
-        gold = torch.LongTensor(gold).cuda() if self.use_cuda else torch.LongTensor(gold)
-        acc_mask = torch.ByteTensor(acc_mask).cuda() if self.use_cuda else torch.ByteTensor(acc_mask)
-
-        tokenize = self.tokenizer(text, padding='max_length', truncation=True, max_length=self.max_length, return_tensors='pt')
-        text = tokenize["input_ids"].squeeze()
-        mask = tokenize["attention_mask"].squeeze()
+        # 数字化
+        text = self.tokenizer(text, padding='max_length', truncation=True, max_length=self.max_length, return_tensors='pt')
+        text = text["input_ids"].squeeze()
         text = torch.LongTensor(text).cuda() if self.use_cuda else torch.LongTensor(text)
-        mask = mask.byte().cuda() if self.use_cuda else mask.byte()
+        start_id = torch.LongTensor([start_id]).cuda() if self.use_cuda else torch.LongTensor([start_id])
+        end_id = torch.LongTensor([end_id]).cuda() if self.use_cuda else torch.LongTensor([end_id])
+
+        if "kbRel" in self.knowledges and kbRel:
+            kbRel = line["kbRel"]
+            triples = [query.replace("?", f" {rel} ") for rel in kbRel]
+            query = "，".join(triples)
+            query = self.tokenizer(query, padding='max_length', truncation=True, max_length=self.max_length // 2, return_tensors='pt')
+            query = query["input_ids"].squeeze()
+        else:
+            query = self.tokenizer(query, padding='max_length', truncation=True, max_length=self.max_length // 2, return_tensors='pt')
+            query = query["input_ids"].squeeze()
+        query = torch.LongTensor(query).cuda() if self.use_cuda else torch.LongTensor(query)
 
         example["text"] = text
-        example["mask"] = mask
-        example["gold"] = gold
-        example["acc_mask"] = acc_mask
+        example["query"] = query
+        example["start_id"] = start_id
+        example["end_id"] = end_id
+
+        if "desc" in self.knowledges:
+            desc1 = self.tokenizer(desc1, padding='max_length', truncation=True, max_length=self.max_length, return_tensors='pt')
+            desc2 = self.tokenizer(desc2, padding='max_length', truncation=True, max_length=self.max_length, return_tensors='pt')
+            desc1 = desc1["input_ids"].squeeze()
+            desc2 = desc2["input_ids"].squeeze()
+            desc1 = torch.LongTensor(desc1).cuda() if self.use_cuda else torch.LongTensor(desc1)
+            desc2 = torch.LongTensor(desc2).cuda() if self.use_cuda else torch.LongTensor(desc2)
+            example["desc1"] = desc1
+            example["desc2"] = desc2
+        if "exrest" in self.knowledges:
+            exrest1 = self.tokenizer(exrest1, padding='max_length', truncation=True, max_length=self.max_length, return_tensors='pt')
+            exrest2 = self.tokenizer(exrest2, padding='max_length', truncation=True, max_length=self.max_length, return_tensors='pt')
+            exrest1 = exrest1["input_ids"].squeeze()
+            exrest2 = exrest2["input_ids"].squeeze()
+            exrest1 = torch.LongTensor(exrest1).cuda() if self.use_cuda else torch.LongTensor(exrest1)
+            exrest2 = torch.LongTensor(exrest2).cuda() if self.use_cuda else torch.LongTensor(exrest2)
+            example["exrest1"] = exrest1
+            example["exrest2"] = exrest2
+
         return example
 
     def getOrigin(self, idx):

@@ -5,3 +5,5 @@
 *.vec
 *.bin
 *.txt
+*.history
+.vscode/
