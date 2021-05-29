@@ -24,3 +24,9 @@ The dataset can be obtained from this link:
 在COER-linked上，本模型的效果为  
 The model's performance on COER-linked is  
 Precision:90.41 Recall:89.99 F1:90.20
+
+## 运行方法
+执行
+> python one_attempt.py
+
+以运行5次训练和测试，保存最佳的模型  
