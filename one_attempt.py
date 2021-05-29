@@ -12,17 +12,10 @@ from test import test
 from config import FLAGS
 
 best_f1 = 0.0
-for i in range(5):
-    FLAGS.knowledges = ["kbRel"]
+for i in range(5):  # 5次运行中取最高值
     with open("out/super.txt", "a") as logf:
         logf.write(str(FLAGS.knowledges) + "\n")
     main(best_f1)
     f1 = test()
     best_f1 = max(f1, best_f1)
 
-# for i in range(5):
-#     FLAGS.knowledges = []
-#     with open("out/super.txt", "a") as logf:
-#         logf.write(str(FLAGS.knowledges) + "\n")
-#     main()
-#     test()

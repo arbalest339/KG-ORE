@@ -26,11 +26,11 @@ class Flags(object):
             curpath, "checkpoints")  # Path of model checkpoints
         # self.checkpoint_path = os.path.join(
         #     self.checkpoint_dir, f"{time.strftime('%m-%d-%H', time.localtime(time.time()))}.pkl")
-        self.checkpoint_path = "checkpoints/no_best.pkl"
+        self.checkpoint_path = "checkpoints/kbrel_best.pkl"
         self.pretrain_checkpoint = os.path.join(
             self.checkpoint_dir, "03-19-10.pkl")
         # self.test_checkpoint = self.checkpoint_path
-        self.test_checkpoint = "checkpoints/no_best.pkl"
+        self.test_checkpoint = "checkpoints/kbrel_best.pkl"
 
         self.data_dir = os.path.join(curpath, "coerkb")  # Path of input data dir
         self.train_path = os.path.join(self.data_dir, "train.txt")     # !!!!!!!!!!!!!!!!!!!!!!
@@ -60,7 +60,7 @@ class Flags(object):
 
         # model choice
         self.use_knowledge = False
-        self.knowledges = []   # ["desc", "exrest", "kbRel"]
+        self.knowledges = ["kbRel"]
 
         # QA full connection
         self.qa_hidden = 300
