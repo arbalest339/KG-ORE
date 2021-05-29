@@ -14,7 +14,6 @@ from config import FLAGS
 
 os.environ["CUDA_VISIBLE_DEVICES"] = '1'
 
-
 def test():
     # load from pretrained config file
     # bertconfig = json.load(open(FLAGS.pretrained_config))

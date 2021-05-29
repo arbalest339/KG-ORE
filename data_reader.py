@@ -91,6 +91,7 @@ class OREDataset(data.Dataset):
             exrest2 = torch.LongTensor(exrest2).cuda() if self.use_cuda else torch.LongTensor(exrest2)
             example["exrest1"] = exrest1
             example["exrest2"] = exrest2
+
         return example
 
     def getOrigin(self, idx):

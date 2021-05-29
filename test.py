@@ -154,9 +154,9 @@ def test():
     print('Testing finished.  ', time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
     wf.write("Testing finished " + str(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))) + "\n")
 
-    with open(FLAGS.train_path, "a") as tf:
-        for exp in errorsExps:
-            tf.write(json.dumps(exp, ensure_ascii=False))
+    # with open(FLAGS.train_path, "a") as tf:
+    #     for exp in errorsExps:
+    #         tf.write(json.dumps(exp, ensure_ascii=False))
     # for exp in pfExps:
     #     exp = [t+"/"+g+"/"+str(p) for t, g, p in zip(exp[0], exp[1], exp[2])]
     #     wf.write(str(exp)+"\n"+"\n")

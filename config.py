@@ -24,6 +24,7 @@ class Flags(object):
         self.pretrained = "bert-base-chinese"
         self.checkpoint_dir = os.path.join(
             curpath, "checkpoints")  # Path of model checkpoints
+
         # self.checkpoint_path = os.path.join(
         #     self.checkpoint_dir, f"{time.strftime('%m-%d-%H', time.localtime(time.time()))}.pkl")
         self.checkpoint_path = "checkpoints/kbrel_best.pkl"
@@ -64,6 +65,5 @@ class Flags(object):
 
         # QA full connection
         self.qa_hidden = 300
-
 
 FLAGS = Flags()
